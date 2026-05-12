@@ -52,8 +52,12 @@ interface ItemProps {
 function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
   const base = 'px-3 py-2 cursor-pointer flex items-center gap-2 rounded text-sm';
   const itemStyle: React.CSSProperties = selected
-    ? { backgroundColor: 'var(--os-selected)', color: '#fff' }
-    : { color: 'var(--os-text)' };
+    ? { backgroundColor: 'var(--os-selected, #7c3aed)', color: '#ffffff' }
+    : { color: 'var(--os-text, #f0f0f5)' };
+
+  const subStyle: React.CSSProperties = {
+    color: selected ? 'rgba(255,255,255,0.7)' : 'var(--os-text-secondary, #8888aa)',
+  };
 
   if (result.type === 'site') {
     return (
@@ -62,10 +66,10 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
         <div className="flex-1 min-w-0">
           <span className="font-medium">{result.site.name}</span>
           {result.query && (
-            <span className="ml-2 opacity-70">"{result.query}"</span>
+            <span className="ml-2" style={subStyle}>"{result.query}"</span>
           )}
         </div>
-        <span className="text-xs opacity-50">Enter</span>
+        <span className="text-xs" style={subStyle}>Enter</span>
       </div>
     );
   }
@@ -76,7 +80,7 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
         <FaviconImg url={result.entry.url} size={16} />
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{result.entry.title || result.entry.url}</div>
-          <div className="truncate text-xs opacity-60">{result.entry.url}</div>
+          <div className="truncate text-xs" style={subStyle}>{result.entry.url}</div>
         </div>
       </div>
     );
@@ -88,9 +92,9 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
         <FaviconImg url={result.entry.url} size={16} />
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{result.entry.title || result.entry.url}</div>
-          <div className="truncate text-xs opacity-60">{result.entry.url}</div>
+          <div className="truncate text-xs" style={subStyle}>{result.entry.url}</div>
         </div>
-        <span className="text-xs opacity-40">★</span>
+        <span className="text-xs" style={subStyle}>★</span>
       </div>
     );
   }
@@ -106,13 +110,13 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
         <div className="flex-1 min-w-0">
           <span className="font-medium">{result.entry.term}</span>
           {result.entry.reading && (
-            <span className="ml-1 text-xs opacity-60">({result.entry.reading})</span>
+            <span className="ml-1 text-xs" style={subStyle}>({result.entry.reading})</span>
           )}
           {result.entry.description && (
-            <div className="truncate text-xs opacity-60">{result.entry.description}</div>
+            <div className="truncate text-xs" style={subStyle}>{result.entry.description}</div>
           )}
         </div>
-        <span className="text-xs opacity-50">Enter</span>
+        <span className="text-xs" style={subStyle}>Enter</span>
       </div>
     );
   }

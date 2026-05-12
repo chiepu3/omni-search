@@ -248,7 +248,10 @@ export function SearchModal({ onClose }: Props) {
 
     if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
       e.preventDefault();
-      setSelectedIndex(i => Math.min(i + 1, results.length - 1));
+      setSelectedIndex(i => {
+        const max = results.length - 1;
+        return max < 0 ? 0 : Math.min(i + 1, max);
+      });
       return;
     }
 
@@ -283,6 +286,7 @@ export function SearchModal({ onClose }: Props) {
       <div
         className="fixed z-[2147483645] left-1/2 -translate-x-1/2 top-[20vh] w-[600px] max-w-[95vw]"
         data-theme={theme}
+        tabIndex={-1}
         onKeyDown={e => e.stopPropagation()}
         onKeyUp={e => e.stopPropagation()}
         onKeyPress={e => e.stopPropagation()}
