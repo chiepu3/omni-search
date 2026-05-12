@@ -6,6 +6,7 @@ import { matchSiteShortcut, buildUrl } from '@/lib/sites';
 import { searchDictionary } from '@/lib/dictionary';
 import { ResultList } from './ResultList';
 import { DictionaryModal } from './DictionaryModal';
+import { IconSearch, IconClose } from './icons';
 
 interface Props {
   onClose: () => void;
@@ -179,7 +180,7 @@ export function SearchModal({ onClose }: Props) {
                 {activeSite.name}
               </span>
             ) : (
-              <span className="text-gray-400 flex-shrink-0">⌕</span>
+              <IconSearch size={18} color="#8888aa" />
             )}
             <input
               ref={inputRef}
@@ -187,7 +188,7 @@ export function SearchModal({ onClose }: Props) {
               value={query}
               onChange={e => handleQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search sites, history, dictionary..."
+              placeholder="サイト・履歴・辞書を検索..."
               className="flex-1 bg-transparent text-gray-100 placeholder-gray-500 outline-none text-base"
               autoComplete="off"
               spellCheck={false}
@@ -195,9 +196,9 @@ export function SearchModal({ onClose }: Props) {
             {query && (
               <button
                 onClick={() => { setQuery(''); setResults([]); setActiveSite(null); inputRef.current?.focus(); }}
-                className="text-gray-500 hover:text-gray-300 text-lg leading-none"
+                className="text-gray-500 hover:text-gray-300 leading-none flex items-center"
               >
-                ×
+                <IconClose size={18} />
               </button>
             )}
           </div>
@@ -216,11 +217,11 @@ export function SearchModal({ onClose }: Props) {
 
           {/* hint bar */}
           <div className="border-t border-white/10 px-4 py-1.5 flex gap-4 text-xs text-gray-500">
-            <span><kbd>Enter</kbd> open</span>
-            <span><kbd>Ctrl+Enter</kbd> new tab</span>
-            <span><kbd>Shift+Enter</kbd> new window</span>
-            <span><kbd>↑↓</kbd> navigate</span>
-            <span><kbd>Esc</kbd> close</span>
+            <span><kbd>Enter</kbd> 現タブで開く</span>
+            <span><kbd>Ctrl+Enter</kbd> 新しいタブ</span>
+            <span><kbd>Shift+Enter</kbd> 新しいウィンドウ</span>
+            <span><kbd>↑↓</kbd> 選択</span>
+            <span><kbd>Esc</kbd> 閉じる</span>
           </div>
         </div>
       </div>

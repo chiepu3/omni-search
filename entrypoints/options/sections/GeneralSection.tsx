@@ -21,49 +21,49 @@ export function GeneralSection() {
   };
 
   return (
-    <div className="space-y-6">
-      <Section title="Keyboard Shortcut">
-        <p className="text-sm text-gray-400">
-          Default: <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-xs">Alt+Shift+K</kbd>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <Section title="キーボードショートカット">
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+          デフォルト：<kbd style={{ backgroundColor: 'var(--surface)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>Alt+Shift+K</kbd>
           <br />
-          Change in Chrome settings: chrome://extensions/shortcuts
+          Chrome設定で変更：chrome://extensions/shortcuts
         </p>
       </Section>
 
-      <Section title="History Shortcut Prefix">
-        <label className="text-sm text-gray-300">
-          Prefix keyword for history-only search
+      <Section title="履歴検索プレフィックス">
+        <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+          履歴検索専用のショートカットキーワード
         </label>
         <input
           type="text"
           value={settings.historyShortcut}
           onChange={e => save({ historyShortcut: e.target.value })}
-          className="mt-1 bg-white/10 text-white rounded px-3 py-1.5 text-sm w-24 outline-none focus:ring-2 focus:ring-violet-500"
+          style={{ ...inputStyle, width: '96px' }}
         />
       </Section>
 
-      <Section title="Max Results">
-        <div className="space-y-2">
-          <label className="flex items-center gap-3 text-sm text-gray-300">
-            History results
+      <Section title="最大表示件数">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            履歴の件数
             <input
               type="number"
               min={1}
               max={50}
               value={settings.maxHistoryResults}
               onChange={e => save({ maxHistoryResults: Number(e.target.value) })}
-              className="bg-white/10 text-white rounded px-2 py-1 text-sm w-20 outline-none focus:ring-2 focus:ring-violet-500"
+              style={{ ...inputStyle, width: '80px' }}
             />
           </label>
-          <label className="flex items-center gap-3 text-sm text-gray-300">
-            Site results
+          <label style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            サイトの件数
             <input
               type="number"
               min={1}
               max={20}
               value={settings.maxSiteResults}
               onChange={e => save({ maxSiteResults: Number(e.target.value) })}
-              className="bg-white/10 text-white rounded px-2 py-1 text-sm w-20 outline-none focus:ring-2 focus:ring-violet-500"
+              style={{ ...inputStyle, width: '80px' }}
             />
           </label>
         </div>
@@ -75,8 +75,18 @@ export function GeneralSection() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">{title}</h2>
-      <div className="bg-white/5 rounded-lg p-4">{children}</div>
+      <h2 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>{title}</h2>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: '8px', padding: '16px' }}>{children}</div>
     </div>
   );
 }
+
+const inputStyle: React.CSSProperties = {
+  backgroundColor: 'var(--surface-hover)',
+  color: 'var(--text)',
+  border: '1px solid var(--border)',
+  borderRadius: '6px',
+  padding: '6px 10px',
+  fontSize: '13px',
+  outline: 'none',
+};

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { storage } from '@/lib/storage';
 import type { SiteConfig } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import { IconAdd, IconEdit, IconDelete } from '@/components/icons';
 
 const BLANK: Omit<SiteConfig, 'id'> = {
   name: '',
@@ -38,60 +39,63 @@ export function SitesSection() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this site?')) return;
+    if (!confirm('このサイトを削除しますか？')) return;
     await save(sites.filter(s => s.id !== id));
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-400">
-          Define shortcut keywords that search specific sites.<br />
-          Example: shortcut <code className="bg-white/10 px-1 rounded">s</code> + URL template <code className="bg-white/10 px-1 rounded">https://site.com/search?q={'{'}query{'}'}</code>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+          ショートカットキーワードを登録して、任意のサイトを素早く検索できます。
         </p>
         <button
           onClick={handleAdd}
-          className="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded"
+          style={accentBtnStyle}
         >
-          + Add site
+          <IconAdd size={16} />
+          サイトを追加
         </button>
       </div>
 
       {sites.length === 0 && (
-        <p className="text-gray-500 text-sm text-center py-8">No sites configured.</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center', padding: '32px 0' }}>
+          サイトが登録されていません。
+        </p>
       )}
 
-      <div className="space-y-2">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {sites.map(site => (
           <div
             key={site.id}
-            className="flex items-center gap-3 bg-white/5 rounded-lg px-4 py-3"
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'var(--surface)', borderRadius: '8px', padding: '12px 16px' }}
           >
             <span
-              className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold flex-shrink-0"
-              style={{ backgroundColor: site.color || '#7c3aed' }}
+              style={{ width: '32px', height: '32px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, flexShrink: 0, backgroundColor: site.color || '#7c3aed' }}
             >
               {site.name.charAt(0).toUpperCase()}
             </span>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm">{site.name}</div>
-              <div className="text-xs text-gray-400 truncate">
-                <kbd className="bg-white/10 px-1 rounded">{site.shortcut}</kbd>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 500, fontSize: '13px' }}>{site.name}</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <kbd style={{ backgroundColor: 'var(--surface-hover)', padding: '1px 4px', borderRadius: '3px', fontSize: '11px' }}>{site.shortcut}</kbd>
                 {' → '}
                 {site.urlTemplate}
               </div>
             </div>
             <button
               onClick={() => setEditing(site)}
-              className="text-xs text-gray-400 hover:text-white px-2"
+              style={actionBtnStyle}
             >
-              Edit
+              <IconEdit size={14} />
+              編集
             </button>
             <button
               onClick={() => handleDelete(site.id)}
-              className="text-xs text-red-400 hover:text-red-300 px-2"
+              style={{ ...actionBtnStyle, color: 'var(--danger)' }}
             >
-              Delete
+              <IconDelete size={14} />
+              削除
             </button>
           </div>
         ))}
@@ -133,60 +137,62 @@ function SiteEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4 border border-white/10">
-        <h3 className="font-semibold text-lg">
-          {site.name ? `Edit: ${site.name}` : 'New site'}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: '12px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', padding: '24px', width: '100%', maxWidth: '512px', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid var(--border)' }}>
+        <h3 style={{ fontWeight: 600, fontSize: '16px', margin: 0 }}>
+          {site.name ? `編集: ${site.name}` : '新しいサイト'}
         </h3>
 
-        <Field label="Site name">
+        <Field label="サイト名">
           <input type="text" value={form.name} onChange={e => set({ name: e.target.value })}
-            className={inputCls} placeholder="e.g. Jira" />
+            style={inputCls} placeholder="例: Jira" />
         </Field>
 
-        <Field label="Shortcut keyword">
+        <Field label="ショートカット">
           <input type="text" value={form.shortcut} onChange={e => set({ shortcut: e.target.value })}
-            className={inputCls} placeholder="e.g. j" />
-          <p className="text-xs text-gray-500 mt-1">Type this + space + query to search</p>
+            style={inputCls} placeholder="例: j" />
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>このキーワード + スペース + クエリで検索します</p>
         </Field>
 
-        <Field label="URL template">
+        <Field label="URLテンプレート">
           <input type="text" value={form.urlTemplate} onChange={e => set({ urlTemplate: e.target.value })}
-            className={inputCls} placeholder="https://example.com/search?q={query}" />
+            style={inputCls} placeholder="https://example.com/search?q={query}" />
         </Field>
 
-        <Field label="Domains (for history filtering)">
+        <Field label="ドメイン（履歴フィルタ用）">
           {form.domains.map((d, i) => (
-            <div key={i} className="flex gap-2 mb-1">
+            <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
               <input type="text" value={d} onChange={e => setDomain(i, e.target.value)}
-                className={`${inputCls} flex-1`} placeholder="example.com" />
-              <button onClick={() => removeDomain(i)} className="text-red-400 hover:text-red-300 px-2">×</button>
+                style={{ ...inputCls, flex: 1 }} placeholder="example.com" />
+              <button onClick={() => removeDomain(i)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                <IconDelete size={16} />
+              </button>
             </div>
           ))}
-          <button onClick={addDomain} className="text-xs text-violet-400 hover:text-violet-300">
-            + Add domain
+          <button onClick={addDomain} style={{ fontSize: '12px', color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
+            + ドメインを追加
           </button>
         </Field>
 
-        <Field label="Theme color">
-          <div className="flex items-center gap-3">
+        <Field label="テーマカラー">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <input type="color" value={form.color || '#7c3aed'} onChange={e => set({ color: e.target.value })}
-              className="h-8 w-12 rounded cursor-pointer bg-transparent" />
-            <span className="text-sm text-gray-400">{form.color}</span>
+              style={{ height: '32px', width: '48px', borderRadius: '6px', cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }} />
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{form.color}</span>
           </div>
         </Field>
 
-        <div className="flex gap-2 pt-2 justify-end">
+        <div style={{ display: 'flex', gap: '8px', paddingTop: '8px', justifyContent: 'flex-end' }}>
           <button onClick={onCancel}
-            className="px-4 py-1.5 text-sm rounded bg-white/10 hover:bg-white/20 text-gray-300">
-            Cancel
+            style={cancelBtnStyle}>
+            キャンセル
           </button>
           <button
             onClick={() => onSave(form)}
             disabled={!form.name || !form.shortcut || !form.urlTemplate}
-            className="px-4 py-1.5 text-sm rounded bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-40"
+            style={accentBtnStyle}
           >
-            Save
+            保存
           </button>
         </div>
       </div>
@@ -197,10 +203,34 @@ function SiteEditor({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs text-gray-400 mb-1">{label}</label>
+      <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>{label}</label>
       {children}
     </div>
   );
 }
 
-const inputCls = 'w-full bg-white/10 text-white rounded px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-violet-500';
+const inputCls: React.CSSProperties = {
+  width: '100%', backgroundColor: 'var(--surface-hover)', color: 'var(--text)',
+  border: '1px solid var(--border)', borderRadius: '6px', padding: '6px 10px',
+  fontSize: '13px', outline: 'none',
+};
+
+const accentBtnStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: '4px',
+  padding: '6px 12px', borderRadius: '6px', fontSize: '13px',
+  backgroundColor: 'var(--accent)', border: 'none',
+  color: '#fff', cursor: 'pointer',
+};
+
+const cancelBtnStyle: React.CSSProperties = {
+  padding: '6px 16px', fontSize: '13px', borderRadius: '6px',
+  backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)',
+  color: 'var(--text-secondary)', cursor: 'pointer',
+};
+
+const actionBtnStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: '4px',
+  fontSize: '12px', color: 'var(--text-secondary)',
+  background: 'none', border: 'none', cursor: 'pointer',
+  padding: '4px 8px',
+};

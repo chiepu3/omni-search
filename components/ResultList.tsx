@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { SearchResult, SiteConfig } from '@/types';
 import { buildUrl } from '@/lib/sites';
+import { IconHistory } from './icons';
 
 interface Props {
   results: SearchResult[];
@@ -71,7 +72,7 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
   if (result.type === 'history') {
     return (
       <div className={cls} onClick={onSelect} onMouseEnter={onHover}>
-        <span className="text-base">🕐</span>
+        <IconHistory size={16} color={selected ? '#fff' : '#8888aa'} />
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{result.entry.title || result.entry.url}</div>
           <div className="truncate text-xs opacity-60">{result.entry.url}</div>
