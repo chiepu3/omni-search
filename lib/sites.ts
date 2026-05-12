@@ -9,13 +9,14 @@ export function matchSiteShortcut(
   sites: SiteConfig[]
 ): { site: SiteConfig; query: string } | null {
   const trimmed = input.trimStart();
+  const lower = trimmed.toLowerCase();
   for (const site of sites) {
-    const prefix = site.shortcut + ' ';
-    if (trimmed.startsWith(prefix)) {
+    const sc = site.shortcut.toLowerCase();
+    const prefix = sc + ' ';
+    if (lower.startsWith(prefix)) {
       return { site, query: trimmed.slice(prefix.length) };
     }
-    // exact shortcut with no space (just shortcut keyword alone)
-    if (trimmed === site.shortcut) {
+    if (lower === sc) {
       return { site, query: '' };
     }
   }

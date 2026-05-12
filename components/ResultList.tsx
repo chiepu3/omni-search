@@ -67,7 +67,7 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
         <div className="flex-1 min-w-0">
           {result.query ? (
             <span className="font-medium">
-              （{result.site.name}）で&quot;{result.query}&quot;を検索する
+              {result.site.name}で&quot;{result.query}&quot;を検索する
             </span>
           ) : (
             <span className="font-medium">{result.site.name} を検索</span>
