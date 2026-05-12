@@ -37,11 +37,14 @@ export const storage = {
 
   async getSettings(): Promise<Settings> {
     const data = await chrome.storage.local.get(KEYS.settings);
-    return { ...DEFAULT_SETTINGS, ...(data[KEYS.settings] as Partial<Settings> ?? {}) };
+    const settings = { ...DEFAULT_SETTINGS, ...(data[KEYS.settings] as Partial<Settings> ?? {}) };
+    try { localStorage.setItem('omnisearch_theme', settings.theme); } catch { /* ignore */ }
+    return settings;
   },
 
   async saveSettings(settings: Settings): Promise<void> {
     await chrome.storage.local.set({ [KEYS.settings]: settings });
+    try { localStorage.setItem('omnisearch_theme', settings.theme); } catch { /* ignore */ }
   },
 
   async getBookmarkShortcuts(): Promise<Record<string, string>> {

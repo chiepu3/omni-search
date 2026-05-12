@@ -174,6 +174,12 @@ function SiteEditor({
           </button>
         </Field>
 
+        <Field label="パスプレフィックス（任意）">
+          <input type="text" value={form.pathPrefix ?? ''} onChange={e => set({ pathPrefix: e.target.value || undefined })}
+            style={inputCls} placeholder="例: /myorg （このパス以下のみ履歴フィルタ対象）" />
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>指定するとそのパス以下のURLのみ履歴に表示されます</p>
+        </Field>
+
         <Field label="テーマカラー">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <input type="color" value={form.color || '#7c3aed'} onChange={e => set({ color: e.target.value })}

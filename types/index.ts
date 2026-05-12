@@ -5,6 +5,7 @@ export interface SiteConfig {
   shortcut: string; // e.g. "s", "g"
   urlTemplate: string; // e.g. "https://example.com/search?q={query}"
   domains: string[]; // multiple domains for intranet + external
+  pathPrefix?: string; // e.g. "/myorg" - only match URLs under this path
   color?: string; // theme color
   icon?: string; // favicon URL or data URL
 }

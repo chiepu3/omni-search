@@ -130,9 +130,18 @@ export function SearchModal({ onClose }: Props) {
 
         if (histResults?.length) {
           const domainFiltered = siteMatch
-            ? histResults.filter(e =>
-                siteMatch!.site.domains.some(d => d.trim() && e.url.includes(d.trim()))
-              )
+            ? histResults.filter(e => {
+                const site = siteMatch!.site;
+                const domainOk = site.domains.some(d => d.trim() && e.url.includes(d.trim()));
+                if (!domainOk) return false;
+                if (site.pathPrefix?.trim()) {
+                  try {
+                    const u = new URL(e.url);
+                    return u.pathname.startsWith(site.pathPrefix.trim());
+                  } catch { return false; }
+                }
+                return true;
+              })
             : histResults;
 
           const fuse = new Fuse(domainFiltered, { keys: ['title', 'url'], threshold: 0.4 });
