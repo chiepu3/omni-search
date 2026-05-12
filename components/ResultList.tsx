@@ -51,13 +51,13 @@ interface ItemProps {
 
 function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
   const base = 'px-3 py-2 cursor-pointer flex items-center gap-2 rounded text-sm';
-  const cls = selected
-    ? `${base} bg-violet-600 text-white`
-    : `${base} hover:bg-white/10 text-gray-200`;
+  const itemStyle: React.CSSProperties = selected
+    ? { backgroundColor: 'var(--os-selected)', color: '#fff' }
+    : { color: 'var(--os-text)' };
 
   if (result.type === 'site') {
     return (
-      <div className={cls} onClick={onSelect} onMouseEnter={onHover}>
+      <div className={base} style={itemStyle} onClick={onSelect} onMouseEnter={onHover}>
         <SiteIcon site={result.site} />
         <div className="flex-1 min-w-0">
           <span className="font-medium">{result.site.name}</span>
@@ -72,7 +72,7 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
 
   if (result.type === 'history') {
     return (
-      <div className={cls} onClick={onSelect} onMouseEnter={onHover}>
+      <div className={base} style={itemStyle} onClick={onSelect} onMouseEnter={onHover}>
         <FaviconImg url={result.entry.url} size={16} />
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{result.entry.title || result.entry.url}</div>
@@ -84,7 +84,7 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
 
   if (result.type === 'bookmark') {
     return (
-      <div className={cls} onClick={onSelect} onMouseEnter={onHover}>
+      <div className={base} style={itemStyle} onClick={onSelect} onMouseEnter={onHover}>
         <FaviconImg url={result.entry.url} size={16} />
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{result.entry.title || result.entry.url}</div>
@@ -98,7 +98,7 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
   if (result.type === 'dictionary') {
     const color = result.dictionary.themeColor || '#7c3aed';
     return (
-      <div className={cls} onClick={onSelect} onMouseEnter={onHover}>
+      <div className={base} style={itemStyle} onClick={onSelect} onMouseEnter={onHover}>
         <span
           className="w-2 h-2 rounded-full flex-shrink-0"
           style={{ backgroundColor: color }}
