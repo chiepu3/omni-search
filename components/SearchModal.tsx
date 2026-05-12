@@ -119,42 +119,55 @@ export function SearchModal({ onClose }: Props) {
       return;
     }
 
-    // 履歴検索クエリ
-    // siteMatch時: ドメイン名でChrome履歴を取得 → ドメインフィルタ → クエリでfuzzy
-    // それ以外: クエリでChrome履歴検索 → fuzzy
-    const chromeHistQ = isHistoryOnly
+    // 履歴検索
+    const fuseQ = isHistoryOnly
       ? q.slice(histPrefix.length).trim()
-      : siteMatch
-        ? (siteMatch.site.domains.find(d => d.trim()) ?? '')
-        : q.trim();
-    const fuseQ = isHistoryOnly ? q.slice(histPrefix.length).trim() : (siteMatch ? siteMatch.query : q.trim());
+      : siteMatch ? siteMatch.query : q.trim();
 
-    if (chromeHistQ !== '' || siteMatch) {
+    if (fuseQ || siteMatch) {
       try {
+        const validDomains = siteMatch
+          ? siteMatch.site.domains.filter(d => d.trim())
+          : [];
+
+        // ドメインがあればドメイン名でChrome履歴を引く、なければクエリで引く
+        const chromeQ = siteMatch
+          ? (validDomains[0] ?? fuseQ)
+          : fuseQ;
+
         const histResults = await chrome.runtime.sendMessage({
           action: 'SEARCH_HISTORY',
-          query: chromeHistQ,
+          query: chromeQ,
         }) as HistoryEntry[];
 
         if (histResults?.length) {
-          const domainFiltered = siteMatch
-            ? histResults.filter(e => {
-                const site = siteMatch!.site;
-                const domainOk = site.domains.some(d => d.trim() && e.url.includes(d.trim()));
-                if (!domainOk) return false;
-                if (site.pathPrefix?.trim()) {
-                  try {
-                    const u = new URL(e.url);
-                    return u.pathname.startsWith(site.pathPrefix.trim());
-                  } catch { return false; }
-                }
-                return true;
-              })
-            : histResults;
+          let filtered = histResults;
+          if (siteMatch && validDomains.length > 0) {
+            filtered = histResults.filter(e => {
+              const domainOk = validDomains.some(d => e.url.includes(d));
+              if (!domainOk) return false;
+              if (siteMatch.site.pathPrefix?.trim()) {
+                try {
+                  const u = new URL(e.url);
+                  return u.pathname.startsWith(siteMatch.site.pathPrefix.trim());
+                } catch { return false; }
+              }
+              return true;
+            });
+          }
 
-          const fuse = new Fuse(domainFiltered, { keys: ['title', 'url'], threshold: 0.4 });
-          const fuzzy = fuseQ ? fuse.search(fuseQ).map(r => r.item) : domainFiltered;
-          fuzzy.slice(0, settings.maxHistoryResults).forEach(entry => {
+          if (fuseQ) {
+            // URLの末尾マッチも拾えるようdistanceを広げる
+            const fuse = new Fuse(filtered, {
+              keys: ['title', 'url'],
+              threshold: 0.4,
+              distance: 1000,
+              includeScore: false,
+            });
+            filtered = fuse.search(fuseQ).map(r => r.item);
+          }
+
+          filtered.slice(0, settings.maxHistoryResults).forEach(entry => {
             newResults.push({ type: 'history', entry });
           });
         }
