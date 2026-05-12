@@ -120,12 +120,20 @@ export function SearchModal({ onClose }: Props) {
     }
 
     // 履歴検索クエリ
-    const histQ = isHistoryOnly ? q.slice(histPrefix.length).trim() : (siteMatch ? siteMatch.query : q.trim());
-    if (histQ) {
+    // siteMatch時: ドメイン名でChrome履歴を取得 → ドメインフィルタ → クエリでfuzzy
+    // それ以外: クエリでChrome履歴検索 → fuzzy
+    const chromeHistQ = isHistoryOnly
+      ? q.slice(histPrefix.length).trim()
+      : siteMatch
+        ? (siteMatch.site.domains.find(d => d.trim()) ?? '')
+        : q.trim();
+    const fuseQ = isHistoryOnly ? q.slice(histPrefix.length).trim() : (siteMatch ? siteMatch.query : q.trim());
+
+    if (chromeHistQ !== '' || siteMatch) {
       try {
         const histResults = await chrome.runtime.sendMessage({
           action: 'SEARCH_HISTORY',
-          query: histQ,
+          query: chromeHistQ,
         }) as HistoryEntry[];
 
         if (histResults?.length) {
@@ -145,7 +153,7 @@ export function SearchModal({ onClose }: Props) {
             : histResults;
 
           const fuse = new Fuse(domainFiltered, { keys: ['title', 'url'], threshold: 0.4 });
-          const fuzzy = histQ ? fuse.search(histQ).map(r => r.item) : domainFiltered;
+          const fuzzy = fuseQ ? fuse.search(fuseQ).map(r => r.item) : domainFiltered;
           fuzzy.slice(0, settings.maxHistoryResults).forEach(entry => {
             newResults.push({ type: 'history', entry });
           });
