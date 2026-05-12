@@ -144,8 +144,8 @@ export function SearchModal({ onClose }: Props) {
       } catch { /* ignore */ }
     }
 
-    // ブックマーク検索（履歴専用・辞書専用モードでなければ）
-    if (!isHistoryOnly && !isDictOnly && q.trim()) {
+    // ブックマーク検索（履歴専用・辞書専用モード以外かつサイトマッチなし）
+    if (!isHistoryOnly && !isDictOnly && !siteMatch && q.trim()) {
       try {
         const bmResults = await chrome.runtime.sendMessage({
           action: 'SEARCH_BOOKMARKS',
@@ -159,8 +159,8 @@ export function SearchModal({ onClose }: Props) {
       } catch { /* ignore */ }
     }
 
-    // 辞書検索（サイトマッチ・履歴専用モード以外）
-    if (!isHistoryOnly && q.trim()) {
+    // 辞書検索（サイトマッチ・履歴専用・辞書専用モード以外）
+    if (!isHistoryOnly && !isDictOnly && !siteMatch && q.trim()) {
       const dictQ = siteMatch ? siteMatch.query : q.trim();
       if (dictQ) {
         for (const dict of dicts) {
@@ -322,11 +322,13 @@ export function SearchModal({ onClose }: Props) {
       </div>
 
       {dictEntry && (
-        <DictionaryModal
-          entry={dictEntry.entry}
-          dictionary={dictEntry.dict}
-          onClose={() => setDictEntry(null)}
-        />
+        <div data-theme={theme}>
+          <DictionaryModal
+            entry={dictEntry.entry}
+            dictionary={dictEntry.dict}
+            onClose={() => setDictEntry(null)}
+          />
+        </div>
       )}
     </>
   );

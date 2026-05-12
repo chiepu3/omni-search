@@ -22,13 +22,15 @@ export default defineBackground(() => {
         maxResults: 100,
         startTime: 0,
       }).then(items =>
-        items.map(item => ({
-          id: item.id ?? '',
-          url: item.url ?? '',
-          title: item.title ?? '',
-          lastVisitTime: item.lastVisitTime ?? 0,
-          visitCount: item.visitCount ?? 0,
-        }))
+        items
+          .filter(item => item.url && !item.url.startsWith('data:') && !item.url.startsWith('blob:'))
+          .map(item => ({
+            id: item.id ?? '',
+            url: item.url ?? '',
+            title: item.title ?? '',
+            lastVisitTime: item.lastVisitTime ?? 0,
+            visitCount: item.visitCount ?? 0,
+          }))
       );
     }
 

@@ -19,7 +19,7 @@
   --surface-hover: #f0f0f5;
   --border: #d0d0e0;
   --text: #1a1a2e;
-  --text-secondary: #555570;
+  --text-secondary: #444466;
   --accent: #7c3aed;
   --accent-hover: #6d28d9;
   --danger: #dc2626;
@@ -33,7 +33,7 @@
     --surface-hover: #f0f0f5;
     --border: #d0d0e0;
     --text: #1a1a2e;
-    --text-secondary: #555570;
+    --text-secondary: #444466;
     --accent: #7c3aed;
     --accent-hover: #6d28d9;
     --danger: #dc2626;
@@ -57,7 +57,8 @@ body {
 
 [data-theme="light"] select,
 [data-theme="light"] input[type="text"],
-[data-theme="light"] input[type="number"] {
+[data-theme="light"] input[type="number"],
+[data-theme="light"] textarea {
   color: var(--text);
   background-color: var(--surface-hover);
   border-color: var(--border);
@@ -66,7 +67,8 @@ body {
 @media (prefers-color-scheme: light) {
   [data-theme="system"] select,
   [data-theme="system"] input[type="text"],
-  [data-theme="system"] input[type="number"] {
+  [data-theme="system"] input[type="number"],
+  [data-theme="system"] textarea {
     color: var(--text);
     background-color: var(--surface-hover);
     border-color: var(--border);
