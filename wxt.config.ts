@@ -6,7 +6,7 @@ export default defineConfig({
     name: 'OmniSearch',
     description: 'PowerToys Run-like quick launcher with site search, history, and dictionary',
     version: '0.1.0',
-    permissions: ['storage', 'history', 'tabs'],
+    permissions: ['storage', 'history', 'tabs', 'bookmarks'],
     host_permissions: ['<all_urls>'],
     commands: {
       'toggle-search': {

@@ -45,5 +45,32 @@ export default defineBackground(() => {
         });
       }
     }
+
+    if (message.action === 'SEARCH_BOOKMARKS') {
+      const query = (message.query as string).toLowerCase();
+      const flattenBookmarks = (nodes: chrome.bookmarks.BookmarkTreeNode[]): { id: string; title: string; url: string }[] => {
+        const results: { id: string; title: string; url: string }[] = [];
+        for (const node of nodes) {
+          if (node.url) {
+            results.push({ id: node.id, title: node.title || node.url, url: node.url });
+          }
+          if (node.children) {
+            results.push(...flattenBookmarks(node.children));
+          }
+        }
+        return results;
+      };
+      return chrome.bookmarks.getTree().then(tree => {
+        const all = flattenBookmarks(tree);
+        if (!query) return all.slice(0, 20);
+        return all.filter(b =>
+          b.title.toLowerCase().includes(query) || b.url.toLowerCase().includes(query)
+        ).slice(0, 20);
+      });
+    }
+
+    if (message.action === 'OPEN_OPTIONS') {
+      browser.runtime.openOptionsPage();
+    }
   });
 });

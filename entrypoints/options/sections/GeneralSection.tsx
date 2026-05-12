@@ -8,6 +8,7 @@ export function GeneralSection() {
     maxHistoryResults: 20,
     maxSiteResults: 5,
     historyShortcut: 'h',
+    dictShortcut: 'd',
   });
 
   useEffect(() => {
@@ -63,6 +64,18 @@ export function GeneralSection() {
           type="text"
           value={settings.historyShortcut}
           onChange={e => save({ historyShortcut: e.target.value })}
+          style={{ ...inputStyle, width: '96px' }}
+        />
+      </Section>
+
+      <Section title="辞書検索プレフィックス">
+        <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+          辞書専用検索のショートカットキーワード
+        </label>
+        <input
+          type="text"
+          value={settings.dictShortcut}
+          onChange={e => save({ dictShortcut: e.target.value })}
           style={{ ...inputStyle, width: '96px' }}
         />
       </Section>

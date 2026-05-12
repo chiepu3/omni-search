@@ -47,11 +47,19 @@ export interface DictionaryEntry {
 // Search mode
 export type SearchMode = 'site' | 'history' | 'dictionary';
 
+// Bookmark entry
+export interface BookmarkEntry {
+  id: string;
+  title: string;
+  url: string;
+}
+
 // Search result
 export type SearchResult =
   | { type: 'site'; site: SiteConfig; query: string }
   | { type: 'history'; entry: HistoryEntry }
-  | { type: 'dictionary'; entry: DictionaryEntry; dictionary: Dictionary };
+  | { type: 'dictionary'; entry: DictionaryEntry; dictionary: Dictionary }
+  | { type: 'bookmark'; entry: BookmarkEntry };
 
 // Settings
 export interface Settings {
@@ -59,6 +67,7 @@ export interface Settings {
   maxHistoryResults: number;
   maxSiteResults: number;
   historyShortcut: string; // shortcut prefix for history, e.g. "h"
+  dictShortcut: string; // shortcut prefix for dictionary, e.g. "d"
 }
 
 // Messages

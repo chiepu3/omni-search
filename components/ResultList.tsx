@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { SearchResult, SiteConfig } from '@/types';
 import { buildUrl } from '@/lib/sites';
-import { IconHistory } from './icons';
+import { FaviconImg } from './FaviconImg';
 
 interface Props {
   results: SearchResult[];
@@ -38,6 +38,7 @@ export function ResultList({ results, selectedIndex, onSelect, onHover }: Props)
 function resultKey(result: SearchResult, i: number): string {
   if (result.type === 'site') return `site-${result.site.id}-${i}`;
   if (result.type === 'history') return `hist-${result.entry.id}`;
+  if (result.type === 'bookmark') return `bm-${result.entry.id}`;
   return `dict-${result.entry.id}`;
 }
 
@@ -72,11 +73,24 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
   if (result.type === 'history') {
     return (
       <div className={cls} onClick={onSelect} onMouseEnter={onHover}>
-        <IconHistory size={16} color={selected ? '#fff' : '#8888aa'} />
+        <FaviconImg url={result.entry.url} size={16} />
         <div className="flex-1 min-w-0">
           <div className="truncate font-medium">{result.entry.title || result.entry.url}</div>
           <div className="truncate text-xs opacity-60">{result.entry.url}</div>
         </div>
+      </div>
+    );
+  }
+
+  if (result.type === 'bookmark') {
+    return (
+      <div className={cls} onClick={onSelect} onMouseEnter={onHover}>
+        <FaviconImg url={result.entry.url} size={16} />
+        <div className="flex-1 min-w-0">
+          <div className="truncate font-medium">{result.entry.title || result.entry.url}</div>
+          <div className="truncate text-xs opacity-60">{result.entry.url}</div>
+        </div>
+        <span className="text-xs opacity-40">★</span>
       </div>
     );
   }

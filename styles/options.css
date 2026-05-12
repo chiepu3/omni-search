@@ -54,3 +54,21 @@ body {
   min-height: 100vh;
   margin: 0;
 }
+
+[data-theme="light"] select,
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="number"] {
+  color: var(--text);
+  background-color: var(--surface-hover);
+  border-color: var(--border);
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] select,
+  [data-theme="system"] input[type="text"],
+  [data-theme="system"] input[type="number"] {
+    color: var(--text);
+    background-color: var(--surface-hover);
+    border-color: var(--border);
+  }
+}

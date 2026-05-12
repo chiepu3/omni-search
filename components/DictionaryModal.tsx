@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { DictionaryEntry, Dictionary } from '@/types';
 
 interface Props {
@@ -9,15 +10,26 @@ interface Props {
 export function DictionaryModal({ entry, dictionary, onClose }: Props) {
   const color = dictionary.themeColor || '#7c3aed';
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handler, true);
+    return () => document.removeEventListener('keydown', handler, true);
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-[2147483646] flex items-center justify-center"
       onClick={onClose}
-      onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
     >
       <div className="absolute inset-0 bg-black/50" />
       <div
-        className="relative bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full mx-4 p-6 text-gray-100"
+        className="relative rounded-xl shadow-2xl max-w-lg w-full mx-4 p-6"
+        style={{ backgroundColor: 'var(--os-bg)', color: 'var(--os-text)', border: '1px solid var(--os-border)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* header */}
@@ -28,16 +40,17 @@ export function DictionaryModal({ entry, dictionary, onClose }: Props) {
                 className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: color }}
               />
-              <span className="text-xs text-gray-400">{dictionary.name}</span>
+              <span className="text-xs" style={{ color: 'var(--os-text-secondary)' }}>{dictionary.name}</span>
             </div>
-            <h2 className="text-xl font-bold mt-1">{entry.term}</h2>
+            <h2 className="text-xl font-bold mt-1" style={{ color: 'var(--os-text)' }}>{entry.term}</h2>
             {entry.reading && (
-              <p className="text-sm text-gray-400">({entry.reading})</p>
+              <p className="text-sm" style={{ color: 'var(--os-text-secondary)' }}>({entry.reading})</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl leading-none ml-4"
+            className="text-xl leading-none ml-4"
+            style={{ color: 'var(--os-text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
             aria-label="Close"
           >
             ×
@@ -46,7 +59,7 @@ export function DictionaryModal({ entry, dictionary, onClose }: Props) {
 
         {/* description */}
         {entry.description && (
-          <p className="text-sm leading-relaxed text-gray-200 whitespace-pre-wrap">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--os-text)' }}>
             {entry.description}
           </p>
         )}
@@ -57,7 +70,8 @@ export function DictionaryModal({ entry, dictionary, onClose }: Props) {
             {entry.tags.map(tag => (
               <span
                 key={tag}
-                className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-300"
+                className="text-xs px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: 'var(--os-border)', color: 'var(--os-text-secondary)' }}
               >
                 {tag}
               </span>
@@ -66,7 +80,7 @@ export function DictionaryModal({ entry, dictionary, onClose }: Props) {
         )}
 
         {/* close hint */}
-        <p className="mt-4 text-xs text-gray-500 text-right">Esc or click outside to close</p>
+        <p className="mt-4 text-xs text-right" style={{ color: 'var(--os-text-secondary)' }}>Esc or click outside to close</p>
       </div>
     </div>
   );

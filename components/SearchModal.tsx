@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Fuse from 'fuse.js';
-import type { SearchResult, SiteConfig, HistoryEntry, Dictionary, DictionaryEntry } from '@/types';
+import type { SearchResult, SiteConfig, HistoryEntry, BookmarkEntry, Dictionary, DictionaryEntry } from '@/types';
 import { storage } from '@/lib/storage';
 import { matchSiteShortcut, buildUrl } from '@/lib/sites';
 import { searchDictionary } from '@/lib/dictionary';
@@ -18,8 +18,10 @@ export function SearchModal({ onClose }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [sites, setSites] = useState<SiteConfig[]>([]);
   const [dicts, setDicts] = useState<Dictionary[]>([]);
-  const [settings, setSettings] = useState({ historyShortcut: 'h', maxHistoryResults: 20, maxSiteResults: 5 });
+  const [settings, setSettings] = useState({ historyShortcut: 'h', dictShortcut: 'd', maxHistoryResults: 20, maxSiteResults: 5 });
   const [activeSite, setActiveSite] = useState<SiteConfig | null>(null);
+  const [activeMode, setActiveMode] = useState<'site' | 'history' | 'dict' | null>(null);
+  const [bookmarkShortcuts, setBookmarkShortcuts] = useState<Record<string, string>>({});
   const [dictEntry, setDictEntry] = useState<{ entry: DictionaryEntry; dict: Dictionary } | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,6 +35,7 @@ export function SearchModal({ onClose }: Props) {
         setTheme((cfg as any).theme || 'dark');
       }
     );
+    storage.getBookmarkShortcuts().then(setBookmarkShortcuts);
     inputRef.current?.focus();
   }, []);
 
@@ -43,79 +46,133 @@ export function SearchModal({ onClose }: Props) {
     if (!q.trim()) {
       setResults([]);
       setActiveSite(null);
+      setActiveMode(null);
       return;
     }
 
     const newResults: SearchResult[] = [];
-
-    // Check if query starts with history shortcut
     const histPrefix = settings.historyShortcut + ' ';
-    const isHistorySearch = q.startsWith(histPrefix) || q === settings.historyShortcut;
-    const historyQuery = isHistorySearch ? q.slice(histPrefix.length) : q;
+    const dictPrefix = settings.dictShortcut + ' ';
+    const isHistoryOnly = q.startsWith(histPrefix) || q === settings.historyShortcut;
+    const isDictOnly = q.startsWith(dictPrefix) || q === settings.dictShortcut;
 
-    // Site search
-    const siteMatch = matchSiteShortcut(q, sites);
-    if (siteMatch) {
-      setActiveSite(siteMatch.site);
-      newResults.push({ type: 'site', site: siteMatch.site, query: siteMatch.query });
-    } else {
+    // ショートカットモード表示
+    if (isHistoryOnly) {
       setActiveSite(null);
-      // Show all matching sites by shortcut prefix
-      for (const site of sites) {
-        if (site.shortcut.startsWith(q.trim())) {
-          newResults.push({ type: 'site', site, query: '' });
-          if (newResults.length >= settings.maxSiteResults) break;
+      setActiveMode('history');
+    } else if (isDictOnly) {
+      setActiveSite(null);
+      setActiveMode('dict');
+    }
+
+    // サイトショートカット（履歴・辞書専用モードでなければ）
+    let siteMatch: { site: SiteConfig; query: string } | null = null;
+    if (!isHistoryOnly && !isDictOnly) {
+      siteMatch = matchSiteShortcut(q, sites);
+      if (siteMatch) {
+        setActiveSite(siteMatch.site);
+        setActiveMode('site');
+        newResults.push({ type: 'site', site: siteMatch.site, query: siteMatch.query });
+      } else {
+        setActiveSite(null);
+        setActiveMode(null);
+        // ショートカットプレフィックス候補
+        for (const site of sites) {
+          if (site.shortcut.startsWith(q.trim())) {
+            newResults.push({ type: 'site', site, query: '' });
+            if (newResults.length >= settings.maxSiteResults) break;
+          }
         }
       }
     }
 
-    // History search
-    const histSearchQuery = siteMatch ? siteMatch.query : historyQuery;
-    if (histSearchQuery.trim()) {
+    // ブックマークショートカットチェック（履歴・辞書専用モード以外）
+    if (!isHistoryOnly && !isDictOnly && !siteMatch) {
+      const trimmed = q.trim();
+      const bmShortcutEntry = Object.entries(bookmarkShortcuts).find(([_, sc]) => {
+        return trimmed === sc || trimmed.startsWith(sc + ' ');
+      });
+      if (bmShortcutEntry) {
+        const [bmId] = bmShortcutEntry;
+        try {
+          const [bm] = await new Promise<chrome.bookmarks.BookmarkTreeNode[]>((resolve) => {
+            chrome.bookmarks.get(bmId, resolve);
+          });
+          if (bm?.url) {
+            newResults.unshift({ type: 'bookmark', entry: { id: bm.id, title: bm.title || bm.url, url: bm.url } });
+          }
+        } catch { /* ignore */ }
+      }
+    }
+
+    // 辞書専用モード
+    if (isDictOnly) {
+      const dictQ = q.slice(dictPrefix.length).trim();
+      if (dictQ) {
+        for (const dict of dicts) {
+          searchDictionary(dict, dictQ).slice(0, 5).forEach(entry => {
+            newResults.push({ type: 'dictionary', entry, dictionary: dict });
+          });
+        }
+      }
+      setResults(newResults);
+      return;
+    }
+
+    // 履歴検索クエリ
+    const histQ = isHistoryOnly ? q.slice(histPrefix.length).trim() : (siteMatch ? siteMatch.query : q.trim());
+    if (histQ) {
       try {
         const histResults = await chrome.runtime.sendMessage({
           action: 'SEARCH_HISTORY',
-          query: histSearchQuery,
+          query: histQ,
         }) as HistoryEntry[];
 
         if (histResults?.length) {
-          // サイトマッチ時はそのサイトのドメインに絞り込む
           const domainFiltered = siteMatch
             ? histResults.filter(e =>
-                siteMatch.site.domains.some(d => d.trim() && e.url.includes(d.trim()))
+                siteMatch!.site.domains.some(d => d.trim() && e.url.includes(d.trim()))
               )
             : histResults;
 
-          const fuse = new Fuse(domainFiltered, {
-            keys: ['title', 'url'],
-            threshold: 0.4,
-          });
-          const fuzzy = histSearchQuery.trim()
-            ? fuse.search(histSearchQuery).map(r => r.item)
-            : domainFiltered;
-
+          const fuse = new Fuse(domainFiltered, { keys: ['title', 'url'], threshold: 0.4 });
+          const fuzzy = histQ ? fuse.search(histQ).map(r => r.item) : domainFiltered;
           fuzzy.slice(0, settings.maxHistoryResults).forEach(entry => {
             newResults.push({ type: 'history', entry });
           });
         }
-      } catch {
-        // ignore
-      }
+      } catch { /* ignore */ }
     }
 
-    // Dictionary search
-    const dictQuery = q.trim();
-    if (dictQuery) {
-      for (const dict of dicts) {
-        const entries = searchDictionary(dict, dictQuery);
-        entries.slice(0, 3).forEach(entry => {
-          newResults.push({ type: 'dictionary', entry, dictionary: dict });
-        });
+    // ブックマーク検索（履歴専用・辞書専用モードでなければ）
+    if (!isHistoryOnly && !isDictOnly && q.trim()) {
+      try {
+        const bmResults = await chrome.runtime.sendMessage({
+          action: 'SEARCH_BOOKMARKS',
+          query: siteMatch ? siteMatch.query : q.trim(),
+        }) as BookmarkEntry[];
+        if (bmResults?.length) {
+          bmResults.slice(0, 5).forEach(entry => {
+            newResults.push({ type: 'bookmark', entry });
+          });
+        }
+      } catch { /* ignore */ }
+    }
+
+    // 辞書検索（サイトマッチ・履歴専用モード以外）
+    if (!isHistoryOnly && q.trim()) {
+      const dictQ = siteMatch ? siteMatch.query : q.trim();
+      if (dictQ) {
+        for (const dict of dicts) {
+          searchDictionary(dict, dictQ).slice(0, 3).forEach(entry => {
+            newResults.push({ type: 'dictionary', entry, dictionary: dict });
+          });
+        }
       }
     }
 
     setResults(newResults);
-  }, [sites, dicts, settings]);
+  }, [sites, dicts, settings, bookmarkShortcuts]);
 
   const open = useCallback((result: SearchResult, target: 'tab' | 'window' | 'current') => {
     if (result.type === 'dictionary') {
@@ -126,6 +183,8 @@ export function SearchModal({ onClose }: Props) {
     let url: string;
     if (result.type === 'site') {
       url = buildUrl(result.site, result.query);
+    } else if (result.type === 'bookmark') {
+      url = result.entry.url;
     } else {
       url = result.entry.url;
     }
@@ -141,6 +200,13 @@ export function SearchModal({ onClose }: Props) {
   }, [onClose]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+      e.preventDefault();
+      chrome.runtime.sendMessage({ action: 'OPEN_OPTIONS' });
+      onClose();
+      return;
+    }
+
     if (e.key === 'Escape') {
       if (dictEntry) {
         setDictEntry(null);
@@ -150,7 +216,7 @@ export function SearchModal({ onClose }: Props) {
       return;
     }
 
-    if (e.key === 'ArrowDown' || e.key === 'Tab') {
+    if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
       e.preventDefault();
       setSelectedIndex(i => Math.min(i + 1, results.length - 1));
       return;
@@ -175,7 +241,7 @@ export function SearchModal({ onClose }: Props) {
         open(result, 'current');
       }
     }
-  }, [results, selectedIndex, open, onClose]);
+  }, [results, selectedIndex, open, onClose, dictEntry]);
 
   return (
     <>
@@ -198,6 +264,14 @@ export function SearchModal({ onClose }: Props) {
               <span className="text-sm font-semibold whitespace-nowrap flex-shrink-0" style={{ color: '#a78bfa' }}>
                 {activeSite.name}
               </span>
+            ) : activeMode === 'history' ? (
+              <span className="text-sm font-semibold whitespace-nowrap flex-shrink-0" style={{ color: '#60a5fa' }}>
+                履歴
+              </span>
+            ) : activeMode === 'dict' ? (
+              <span className="text-sm font-semibold whitespace-nowrap flex-shrink-0" style={{ color: '#34d399' }}>
+                辞書
+              </span>
             ) : (
               <IconSearch size={18} color="var(--os-text-secondary)" />
             )}
@@ -215,7 +289,7 @@ export function SearchModal({ onClose }: Props) {
             />
             {query && (
               <button
-                onClick={() => { setQuery(''); setResults([]); setActiveSite(null); inputRef.current?.focus(); }}
+                onClick={() => { setQuery(''); setResults([]); setActiveSite(null); setActiveMode(null); inputRef.current?.focus(); }}
                 className="leading-none flex items-center"
                 style={{ color: 'var(--os-text-secondary)' }}
               >

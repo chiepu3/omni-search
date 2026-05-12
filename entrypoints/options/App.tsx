@@ -3,14 +3,16 @@ import { storage } from '@/lib/storage';
 import { SitesSection } from './sections/SitesSection';
 import { DictionarySection } from './sections/DictionarySection';
 import { GeneralSection } from './sections/GeneralSection';
+import { BookmarkShortcutsSection } from './sections/BookmarkShortcutsSection';
 import { IconSettings, IconSearch, IconBook, IconUpload, IconDownload } from '@/components/icons';
 
-type Tab = 'general' | 'sites' | 'dictionary';
+type Tab = 'general' | 'sites' | 'dictionary' | 'bookmarks';
 
 const TAB_LABELS: Record<Tab, { label: string; icon: React.ReactNode }> = {
   general: { label: '一般設定', icon: <IconSettings size={18} /> },
   sites: { label: 'サイト検索', icon: <IconSearch size={18} /> },
   dictionary: { label: '辞書', icon: <IconBook size={18} /> },
+  bookmarks: { label: 'ブックマーク', icon: <IconBook size={18} /> },
 };
 
 export function App() {
@@ -23,12 +25,11 @@ export function App() {
   }, []);
 
   const handleExport = async () => {
-    const json = await storage.exportAll();
-    const blob = new Blob([json], { type: 'application/json' });
+    const blob = await storage.exportAll();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'omnisearch-settings.json';
+    a.download = 'omnisearch-settings.zip';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -36,12 +37,11 @@ export function App() {
   const handleImport = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json';
+    input.accept = '.zip';
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
-      const text = await file.text();
-      await storage.importAll(text);
+      await storage.importAll(file);
       alert('設定をインポートしました。拡張機能を再読み込みしてください。');
     };
     input.click();
@@ -92,6 +92,7 @@ export function App() {
           {activeTab === 'general' && <GeneralSection />}
           {activeTab === 'sites' && <SitesSection />}
           {activeTab === 'dictionary' && <DictionarySection />}
+          {activeTab === 'bookmarks' && <BookmarkShortcutsSection />}
         </main>
       </div>
     </div>

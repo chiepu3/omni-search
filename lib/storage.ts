@@ -1,3 +1,4 @@
+import JSZip from 'jszip';
 import type { SiteConfig, Dictionary, Settings } from '@/types';
 
 const DEFAULT_SETTINGS: Settings = {
@@ -5,12 +6,14 @@ const DEFAULT_SETTINGS: Settings = {
   maxHistoryResults: 20,
   maxSiteResults: 5,
   historyShortcut: 'h',
+  dictShortcut: 'd',
 };
 
 const KEYS = {
   sites: 'omnisearch_sites',
   dictionaries: 'omnisearch_dicts',
   settings: 'omnisearch_settings',
+  bookmarkShortcuts: 'omnisearch_bm_shortcuts',
 } as const;
 
 export const storage = {
@@ -41,21 +44,44 @@ export const storage = {
     await chrome.storage.local.set({ [KEYS.settings]: settings });
   },
 
-  async exportAll(): Promise<string> {
+  async getBookmarkShortcuts(): Promise<Record<string, string>> {
+    const data = await chrome.storage.local.get(KEYS.bookmarkShortcuts);
+    return (data[KEYS.bookmarkShortcuts] as Record<string, string>) ?? {};
+  },
+
+  async saveBookmarkShortcuts(shortcuts: Record<string, string>): Promise<void> {
+    await chrome.storage.local.set({ [KEYS.bookmarkShortcuts]: shortcuts });
+  },
+
+  async exportAll(): Promise<Blob> {
     const [sites, dicts, settings] = await Promise.all([
       this.getSites(),
       this.getDictionaries(),
       this.getSettings(),
     ]);
-    return JSON.stringify({ sites, dicts, settings }, null, 2);
+    const zip = new JSZip();
+    zip.file('sites.json', JSON.stringify(sites, null, 2));
+    zip.file('dicts.json', JSON.stringify(dicts, null, 2));
+    zip.file('settings.json', JSON.stringify(settings, null, 2));
+    return zip.generateAsync({ type: 'blob' });
   },
 
-  async importAll(json: string): Promise<void> {
-    const data = JSON.parse(json);
+  async importAll(file: File): Promise<void> {
+    const zip = await JSZip.loadAsync(file);
+    const readJson = async (name: string) => {
+      const f = zip.file(name);
+      if (!f) return null;
+      return JSON.parse(await f.async('string'));
+    };
+    const [sites, dicts, settings] = await Promise.all([
+      readJson('sites.json'),
+      readJson('dicts.json'),
+      readJson('settings.json'),
+    ]);
     await Promise.all([
-      data.sites && this.saveSites(data.sites),
-      data.dicts && this.saveDictionaries(data.dicts),
-      data.settings && this.saveSettings({ ...DEFAULT_SETTINGS, ...data.settings }),
+      sites && this.saveSites(sites),
+      dicts && this.saveDictionaries(dicts),
+      settings && this.saveSettings({ ...DEFAULT_SETTINGS, ...settings }),
     ]);
   },
 };
