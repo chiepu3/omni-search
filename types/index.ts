@@ -60,7 +60,8 @@ export type SearchResult =
   | { type: 'site'; site: SiteConfig; query: string }
   | { type: 'history'; entry: HistoryEntry }
   | { type: 'dictionary'; entry: DictionaryEntry; dictionary: Dictionary }
-  | { type: 'bookmark'; entry: BookmarkEntry };
+  | { type: 'bookmark'; entry: BookmarkEntry }
+  | { type: 'google'; query: string };
 
 // Settings
 export interface Settings {

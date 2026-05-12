@@ -201,6 +201,11 @@ export function SearchModal({ onClose }: Props) {
       }
     }
 
+    // Google検索を最下位に追加（通常クエリのみ）
+    if (!siteMatch && q.trim()) {
+      newResults.push({ type: 'google', query: q.trim() });
+    }
+
     setResults(newResults);
   }, [sites, dicts, settings, bookmarkShortcuts]);
 
@@ -213,10 +218,12 @@ export function SearchModal({ onClose }: Props) {
     let url: string;
     if (result.type === 'site') {
       url = buildUrl(result.site, result.query);
+    } else if (result.type === 'google') {
+      url = `https://www.google.com/search?q=${encodeURIComponent(result.query)}`;
     } else if (result.type === 'bookmark') {
       url = result.entry.url;
     } else {
-      url = result.entry.url;
+      url = (result as { entry: { url: string } }).entry.url;
     }
 
     if (target === 'tab') {

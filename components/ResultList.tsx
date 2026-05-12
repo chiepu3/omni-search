@@ -39,6 +39,7 @@ function resultKey(result: SearchResult, i: number): string {
   if (result.type === 'site') return `site-${result.site.id}-${i}`;
   if (result.type === 'history') return `hist-${result.entry.id}`;
   if (result.type === 'bookmark') return `bm-${result.entry.id}`;
+  if (result.type === 'google') return `google-${i}`;
   return `dict-${result.entry.id}`;
 }
 
@@ -64,9 +65,12 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
       <div className={base} style={itemStyle} onClick={onSelect} onMouseEnter={onHover}>
         <SiteIcon site={result.site} />
         <div className="flex-1 min-w-0">
-          <span className="font-medium">{result.site.name}</span>
-          {result.query && (
-            <span className="ml-2" style={subStyle}>"{result.query}"</span>
+          {result.query ? (
+            <span className="font-medium">
+              （{result.site.name}）で&quot;{result.query}&quot;を検索する
+            </span>
+          ) : (
+            <span className="font-medium">{result.site.name} を検索</span>
           )}
         </div>
         <span className="text-xs" style={subStyle}>Enter</span>
@@ -115,6 +119,18 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
           {result.entry.description && (
             <div className="truncate text-xs" style={subStyle}>{result.entry.description}</div>
           )}
+        </div>
+        <span className="text-xs" style={subStyle}>Enter</span>
+      </div>
+    );
+  }
+
+  if (result.type === 'google') {
+    return (
+      <div className={base} style={itemStyle} onClick={onSelect} onMouseEnter={onHover}>
+        <span className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-xs font-bold" style={{ color: '#4285f4' }}>G</span>
+        <div className="flex-1 min-w-0">
+          <span className="font-medium">Googleで&quot;{result.query}&quot;を検索する</span>
         </div>
         <span className="text-xs" style={subStyle}>Enter</span>
       </div>

@@ -92,3 +92,36 @@ export function createDictionary(
     updatedAt: now,
   };
 }
+
+export function updateDictionary(
+  existing: Dictionary,
+  csvText: string,
+): { updated: Dictionary } | { error: string } {
+  const rows = parseCsv(csvText);
+  if (rows.length === 0) return { error: 'CSVが空です' };
+
+  const mapping = existing.format;
+  const usedCols = [
+    mapping.termColumn,
+    mapping.readingColumn ?? -1,
+    mapping.descriptionColumn ?? -1,
+    mapping.tagColumn ?? -1,
+  ].filter(c => c >= 0);
+  const maxCol = Math.max(...usedCols);
+  const actualCols = rows[0].length;
+
+  if (actualCols <= maxCol) {
+    return {
+      error: `形式が一致しません（必要列数: ${maxCol + 1}、実際: ${actualCols}）。この辞書の形式で再インポートしてください。`,
+    };
+  }
+
+  const entries = csvToEntries(rows, mapping);
+  return {
+    updated: {
+      ...existing,
+      entries,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+}

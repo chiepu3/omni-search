@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { storage } from '@/lib/storage';
 import type { Dictionary, ColumnMapping } from '@/types';
-import { createDictionary, parseCsv, detectFormatChange } from '@/lib/dictionary';
-import { IconAdd, IconDelete, IconImport } from '@/components/icons';
+import { createDictionary, parseCsv, detectFormatChange, updateDictionary } from '@/lib/dictionary';
+import { IconAdd, IconDelete, IconEdit, IconImport } from '@/components/icons';
 
 export function DictionarySection() {
   const [dicts, setDicts] = useState<Dictionary[]>([]);
   const [showImport, setShowImport] = useState(false);
+  const [updatingDict, setUpdatingDict] = useState<Dictionary | null>(null);
 
   useEffect(() => {
     storage.getDictionaries().then(setDicts);
@@ -29,6 +30,12 @@ export function DictionarySection() {
       : [...dicts, dict];
     await save(next);
     setShowImport(false);
+  };
+
+  const handleUpdated = async (dict: Dictionary) => {
+    const next = dicts.map(d => d.id === dict.id ? dict : d);
+    await save(next);
+    setUpdatingDict(null);
   };
 
   return (
@@ -67,6 +74,13 @@ export function DictionarySection() {
               </div>
             </div>
             <button
+              onClick={() => setUpdatingDict(dict)}
+              style={{ ...actionBtnStyle, color: 'var(--accent)' }}
+            >
+              <IconEdit size={14} />
+              更新
+            </button>
+            <button
               onClick={() => handleDelete(dict.id)}
               style={{ ...actionBtnStyle, color: 'var(--danger)' }}
             >
@@ -82,6 +96,14 @@ export function DictionarySection() {
           existingDicts={dicts}
           onImport={handleImported}
           onCancel={() => setShowImport(false)}
+        />
+      )}
+
+      {updatingDict && (
+        <DictUpdater
+          dict={updatingDict}
+          onUpdate={handleUpdated}
+          onCancel={() => setUpdatingDict(null)}
         />
       )}
     </div>
@@ -305,3 +327,79 @@ const inputCls: React.CSSProperties = {
   border: '1px solid var(--border)', borderRadius: '6px', padding: '6px 10px',
   fontSize: '13px', outline: 'none',
 };
+
+function DictUpdater({
+  dict,
+  onUpdate,
+  onCancel,
+}: {
+  dict: Dictionary;
+  onUpdate: (d: Dictionary) => void;
+  onCancel: () => void;
+}) {
+  const [csvText, setCsvText] = useState('');
+  const [error, setError] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    const text = await file.text();
+    setCsvText(text);
+    setError('');
+  };
+
+  const handleApply = () => {
+    const result = updateDictionary(dict, csvText);
+    if ('error' in result) {
+      setError(result.error);
+      return;
+    }
+    onUpdate(result.updated);
+  };
+
+  const fieldStyle = { width: '100%', backgroundColor: 'var(--surface-hover)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '6px', padding: '6px 10px', fontSize: '13px' };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' }}>
+      <div style={{ backgroundColor: 'var(--surface)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '512px', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid var(--border)' }}>
+        <h3 style={{ fontWeight: 600, fontSize: '16px', margin: 0 }}>
+          「{dict.name}」を更新
+        </h3>
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+          同じ形式のCSVを指定してください。形式が異なる場合は拒否されます。
+        </p>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            onClick={() => fileRef.current?.click()}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', color: 'var(--text-secondary)', cursor: 'pointer' }}
+          >
+            <IconImport size={14} />
+            CSVファイルを選択
+          </button>
+          {csvText && <span style={{ fontSize: '13px', color: 'var(--success)' }}>読み込み完了</span>}
+          <input ref={fileRef} type="file" accept=".csv,.txt" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+        </div>
+        <textarea
+          value={csvText}
+          onChange={e => { setCsvText(e.target.value); setError(''); }}
+          placeholder="またはCSVテキストを直接貼り付け..."
+          rows={6}
+          style={{ ...fieldStyle, resize: 'vertical' }}
+        />
+        {error && <p style={{ color: 'var(--danger)', fontSize: '13px', margin: 0 }}>{error}</p>}
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button onClick={onCancel} style={{ padding: '7px 16px', borderRadius: '6px', fontSize: '13px', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            キャンセル
+          </button>
+          <button
+            onClick={handleApply}
+            disabled={!csvText}
+            style={{ padding: '7px 16px', borderRadius: '6px', fontSize: '13px', backgroundColor: 'var(--accent)', border: 'none', color: '#fff', cursor: csvText ? 'pointer' : 'default', opacity: csvText ? 1 : 0.5 }}
+          >
+            更新する
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
