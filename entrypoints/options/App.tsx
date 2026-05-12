@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { storage } from '@/lib/storage';
 import { SitesSection } from './sections/SitesSection';
 import { DictionarySection } from './sections/DictionarySection';
@@ -15,6 +15,12 @@ const TAB_LABELS: Record<Tab, { label: string; icon: React.ReactNode }> = {
 
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>('sites');
+
+  useEffect(() => {
+    storage.getSettings().then(s => {
+      document.documentElement.setAttribute('data-theme', s.theme || 'dark');
+    });
+  }, []);
 
   const handleExport = async () => {
     const json = await storage.exportAll();

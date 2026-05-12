@@ -22,6 +22,31 @@ export function GeneralSection() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <Section title="カラーテーマ">
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {(['dark', 'light', 'system'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => {
+                save({ theme: t });
+                document.documentElement.setAttribute('data-theme', t);
+              }}
+              style={{
+                padding: '6px 16px',
+                borderRadius: '6px',
+                fontSize: '13px',
+                border: '1px solid var(--border)',
+                cursor: 'pointer',
+                backgroundColor: settings.theme === t ? 'var(--accent)' : 'var(--surface-hover)',
+                color: settings.theme === t ? '#fff' : 'var(--text)',
+              }}
+            >
+              {t === 'dark' ? 'ダーク' : t === 'light' ? 'ライト' : 'システム'}
+            </button>
+          ))}
+        </div>
+      </Section>
+
       <Section title="キーボードショートカット">
         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
           デフォルト：<kbd style={{ backgroundColor: 'var(--surface)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>Alt+Shift+K</kbd>

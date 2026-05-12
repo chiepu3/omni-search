@@ -21,6 +21,7 @@ export function SearchModal({ onClose }: Props) {
   const [settings, setSettings] = useState({ historyShortcut: 'h', maxHistoryResults: 20, maxSiteResults: 5 });
   const [activeSite, setActiveSite] = useState<SiteConfig | null>(null);
   const [dictEntry, setDictEntry] = useState<{ entry: DictionaryEntry; dict: Dictionary } | null>(null);
+  const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export function SearchModal({ onClose }: Props) {
         setSites(s);
         setDicts(d);
         setSettings(cfg as any);
+        setTheme((cfg as any).theme || 'dark');
       }
     );
     inputRef.current?.focus();
@@ -67,22 +69,30 @@ export function SearchModal({ onClose }: Props) {
       }
     }
 
-    // History search (background script)
-    if (historyQuery.trim()) {
+    // History search
+    const histSearchQuery = siteMatch ? siteMatch.query : historyQuery;
+    if (histSearchQuery.trim()) {
       try {
         const histResults = await chrome.runtime.sendMessage({
           action: 'SEARCH_HISTORY',
-          query: historyQuery,
+          query: histSearchQuery,
         }) as HistoryEntry[];
 
         if (histResults?.length) {
-          const fuse = new Fuse(histResults, {
+          // サイトマッチ時はそのサイトのドメインに絞り込む
+          const domainFiltered = siteMatch
+            ? histResults.filter(e =>
+                siteMatch.site.domains.some(d => d.trim() && e.url.includes(d.trim()))
+              )
+            : histResults;
+
+          const fuse = new Fuse(domainFiltered, {
             keys: ['title', 'url'],
             threshold: 0.4,
           });
-          const fuzzy = historyQuery.trim()
-            ? fuse.search(historyQuery).map(r => r.item)
-            : histResults;
+          const fuzzy = histSearchQuery.trim()
+            ? fuse.search(histSearchQuery).map(r => r.item)
+            : domainFiltered;
 
           fuzzy.slice(0, settings.maxHistoryResults).forEach(entry => {
             newResults.push({ type: 'history', entry });
@@ -94,7 +104,7 @@ export function SearchModal({ onClose }: Props) {
     }
 
     // Dictionary search
-    const dictQuery = siteMatch ? '' : q.trim();
+    const dictQuery = q.trim();
     if (dictQuery) {
       for (const dict of dicts) {
         const entries = searchDictionary(dict, dictQuery);
@@ -132,6 +142,10 @@ export function SearchModal({ onClose }: Props) {
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
+      if (dictEntry) {
+        setDictEntry(null);
+        return;
+      }
       onClose();
       return;
     }
@@ -167,20 +181,25 @@ export function SearchModal({ onClose }: Props) {
     <>
       <div
         className="fixed inset-0 z-[2147483645]"
+        data-theme={theme}
         onClick={onClose}
       />
       <div
         className="fixed z-[2147483645] left-1/2 -translate-x-1/2 top-[20vh] w-[600px] max-w-[95vw]"
+        data-theme={theme}
+        onKeyDown={e => e.stopPropagation()}
+        onKeyUp={e => e.stopPropagation()}
+        onKeyPress={e => e.stopPropagation()}
       >
-        <div className="bg-gray-900 rounded-xl shadow-2xl border border-white/10 overflow-hidden">
+        <div className="rounded-xl shadow-2xl overflow-hidden" style={{ backgroundColor: 'var(--os-bg)', border: '1px solid var(--os-border)' }}>
           {/* input row */}
           <div className="flex items-center px-4 py-3 gap-3">
             {activeSite ? (
-              <span className="text-sm font-semibold text-violet-300 whitespace-nowrap flex-shrink-0">
+              <span className="text-sm font-semibold whitespace-nowrap flex-shrink-0" style={{ color: '#a78bfa' }}>
                 {activeSite.name}
               </span>
             ) : (
-              <IconSearch size={18} color="#8888aa" />
+              <IconSearch size={18} color="var(--os-text-secondary)" />
             )}
             <input
               ref={inputRef}
@@ -189,14 +208,16 @@ export function SearchModal({ onClose }: Props) {
               onChange={e => handleQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="サイト・履歴・辞書を検索..."
-              className="flex-1 bg-transparent text-gray-100 placeholder-gray-500 outline-none text-base"
+              className="flex-1 bg-transparent outline-none text-base"
+              style={{ color: 'var(--os-text)' }}
               autoComplete="off"
               spellCheck={false}
             />
             {query && (
               <button
                 onClick={() => { setQuery(''); setResults([]); setActiveSite(null); inputRef.current?.focus(); }}
-                className="text-gray-500 hover:text-gray-300 leading-none flex items-center"
+                className="leading-none flex items-center"
+                style={{ color: 'var(--os-text-secondary)' }}
               >
                 <IconClose size={18} />
               </button>
@@ -205,7 +226,7 @@ export function SearchModal({ onClose }: Props) {
 
           {/* results */}
           {results.length > 0 && (
-            <div className="border-t border-white/10 px-2 pb-2">
+            <div className="px-2 pb-2" style={{ borderTop: '1px solid var(--os-border)' }}>
               <ResultList
                 results={results}
                 selectedIndex={selectedIndex}
@@ -216,7 +237,7 @@ export function SearchModal({ onClose }: Props) {
           )}
 
           {/* hint bar */}
-          <div className="border-t border-white/10 px-4 py-1.5 flex gap-4 text-xs text-gray-500">
+          <div className="px-4 py-1.5 flex gap-4 text-xs" style={{ borderTop: '1px solid var(--os-border)', color: 'var(--os-text-secondary)' }}>
             <span><kbd>Enter</kbd> 現タブで開く</span>
             <span><kbd>Ctrl+Enter</kbd> 新しいタブ</span>
             <span><kbd>Shift+Enter</kbd> 新しいウィンドウ</span>

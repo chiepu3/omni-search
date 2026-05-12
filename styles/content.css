@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+:host {
+  all: initial;
+}
+
+[data-theme="dark"], :host {
+  --os-bg: #1a1a24;
+  --os-border: rgba(255,255,255,0.1);
+  --os-text: #f0f0f5;
+  --os-text-secondary: #8888aa;
+  --os-selected: #7c3aed;
+}
+
+[data-theme="light"] {
+  --os-bg: #ffffff;
+  --os-border: rgba(0,0,0,0.1);
+  --os-text: #1a1a2e;
+  --os-text-secondary: #555570;
+  --os-selected: #7c3aed;
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] {
+    --os-bg: #ffffff;
+    --os-border: rgba(0,0,0,0.1);
+    --os-text: #1a1a2e;
+    --os-text-secondary: #555570;
+    --os-selected: #7c3aed;
+  }
+}
