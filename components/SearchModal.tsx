@@ -25,6 +25,8 @@ export function SearchModal({ onClose }: Props) {
   const [dictEntry, setDictEntry] = useState<{ entry: DictionaryEntry; dict: Dictionary } | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
   const inputRef = useRef<HTMLInputElement>(null);
+  const latestResultsRef = useRef<SearchResult[]>([]);
+  const queryIdRef = useRef(0);
 
   useEffect(() => {
     Promise.all([storage.getSites(), storage.getDictionaries(), storage.getSettings()]).then(
@@ -40,10 +42,12 @@ export function SearchModal({ onClose }: Props) {
   }, []);
 
   const handleQuery = useCallback(async (q: string) => {
+    const myId = ++queryIdRef.current;
     setQuery(q);
     setSelectedIndex(0);
 
     if (!q.trim()) {
+      latestResultsRef.current = [];
       setResults([]);
       setActiveSite(null);
       setActiveMode(null);
@@ -86,6 +90,9 @@ export function SearchModal({ onClose }: Props) {
       }
     }
 
+    // ここまでは同期処理 — Enterキーが使える最新結果をrefに保存
+    latestResultsRef.current = [...newResults];
+
     // ブックマークショートカットチェック（履歴・辞書専用モード以外）
     if (!isHistoryOnly && !isDictOnly && !siteMatch) {
       const trimmed = q.trim();
@@ -98,6 +105,7 @@ export function SearchModal({ onClose }: Props) {
           const [bm] = await new Promise<chrome.bookmarks.BookmarkTreeNode[]>((resolve) => {
             chrome.bookmarks.get(bmId, resolve);
           });
+          if (myId !== queryIdRef.current) return;
           if (bm?.url) {
             newResults.unshift({ type: 'bookmark', entry: { id: bm.id, title: bm.title || bm.url, url: bm.url } });
           }
@@ -115,6 +123,7 @@ export function SearchModal({ onClose }: Props) {
           });
         }
       }
+      latestResultsRef.current = newResults;
       setResults(newResults);
       return;
     }
@@ -139,6 +148,8 @@ export function SearchModal({ onClose }: Props) {
           action: 'SEARCH_HISTORY',
           query: chromeQ,
         }) as HistoryEntry[];
+
+        if (myId !== queryIdRef.current) return;
 
         if (histResults?.length) {
           let filtered = histResults;
@@ -174,6 +185,8 @@ export function SearchModal({ onClose }: Props) {
       } catch { /* ignore */ }
     }
 
+    if (myId !== queryIdRef.current) return;
+
     // ブックマーク検索（履歴専用・辞書専用モード以外かつサイトマッチなし）
     if (!isHistoryOnly && !isDictOnly && !siteMatch && q.trim()) {
       try {
@@ -181,6 +194,7 @@ export function SearchModal({ onClose }: Props) {
           action: 'SEARCH_BOOKMARKS',
           query: siteMatch ? siteMatch.query : q.trim(),
         }) as BookmarkEntry[];
+        if (myId !== queryIdRef.current) return;
         if (bmResults?.length) {
           bmResults.slice(0, 5).forEach(entry => {
             newResults.push({ type: 'bookmark', entry });
@@ -206,6 +220,7 @@ export function SearchModal({ onClose }: Props) {
       newResults.push({ type: 'google', query: q.trim() });
     }
 
+    latestResultsRef.current = newResults;
     setResults(newResults);
   }, [sites, dicts, settings, bookmarkShortcuts]);
 
@@ -270,7 +285,8 @@ export function SearchModal({ onClose }: Props) {
 
     if (e.key === 'Enter') {
       e.preventDefault();
-      const result = results[selectedIndex];
+      // refを参照することでasync処理中でも最新クエリの結果を使う
+      const result = latestResultsRef.current[selectedIndex] ?? results[selectedIndex];
       if (!result) return;
 
       if (e.ctrlKey || e.metaKey) {

@@ -13,32 +13,47 @@ export function stripHtmlTags(html: string): string {
 
 export function parseCsv(csvText: string): string[][] {
   const rows: string[][] = [];
-  const lines = csvText.split(/\r?\n/);
-  for (const line of lines) {
-    if (line.trim() === '') continue;
-    // simple CSV parse (handles quoted fields)
-    const cells: string[] = [];
-    let current = '';
-    let inQuote = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
+  let cells: string[] = [];
+  let current = '';
+  let inQuote = false;
+  const n = csvText.length;
+
+  const flushRow = () => {
+    if (cells.some(c => c !== '') || cells.length > 1) rows.push(cells);
+    cells = [];
+    current = '';
+  };
+
+  for (let i = 0; i < n; i++) {
+    const ch = csvText[i];
+    if (inQuote) {
       if (ch === '"') {
-        if (inQuote && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuote = !inQuote;
-        }
-      } else if (ch === ',' && !inQuote) {
+        if (i + 1 < n && csvText[i + 1] === '"') { current += '"'; i++; }
+        else inQuote = false;
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuote = true;
+      } else if (ch === ',') {
         cells.push(current);
         current = '';
+      } else if (ch === '\r') {
+        if (i + 1 < n && csvText[i + 1] === '\n') i++;
+        cells.push(current);
+        flushRow();
+      } else if (ch === '\n') {
+        cells.push(current);
+        flushRow();
       } else {
         current += ch;
       }
     }
-    cells.push(current);
-    rows.push(cells);
   }
+  cells.push(current);
+  if (cells.some(c => c !== '') || cells.length > 1) rows.push(cells);
+
   return rows;
 }
 
