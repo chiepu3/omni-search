@@ -74,5 +74,17 @@ export default defineBackground(() => {
     if (message.action === 'OPEN_OPTIONS') {
       browser.runtime.openOptionsPage();
     }
+
+    if (message.action === 'FETCH_FAVICON') {
+      const domain = message.domain as string;
+      return fetch(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`)
+        .then(r => r.blob())
+        .then(blob => new Promise<string>(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        }))
+        .catch(() => null);
+    }
   });
 });
