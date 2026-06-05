@@ -32,7 +32,6 @@ export function FaviconImg({ url, size = 16 }: Props) {
 
   useEffect(() => {
     if (!domain) return;
-    if (cache.has(domain)) { setSrc(cache.get(domain) ?? null); return; }
     fetchFaviconViaBackground(domain).then(setSrc);
   }, [domain]);
 
