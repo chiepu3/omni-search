@@ -1,26 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+// Module-level cache shared across all FaviconImg instances
+const cache = new Map<string, string | null>();
+const pending = new Map<string, Promise<string | null>>();
+
+function getDomain(url: string): string {
+  try { return new URL(url).hostname; } catch { return ''; }
+}
+
+function fetchFaviconViaBackground(domain: string): Promise<string | null> {
+  if (cache.has(domain)) return Promise.resolve(cache.get(domain) ?? null);
+  if (pending.has(domain)) return pending.get(domain)!;
+
+  const p = (chrome.runtime.sendMessage({ action: 'FETCH_FAVICON', domain }) as Promise<string | null>)
+    .then(url => { cache.set(domain, url); return url; })
+    .catch(() => { cache.set(domain, null); return null; })
+    .finally(() => { pending.delete(domain); });
+
+  pending.set(domain, p);
+  return p;
+}
 
 interface Props {
   url: string;
   size?: number;
 }
 
-function getDomain(url: string): string {
-  try { return new URL(url).hostname; } catch { return ''; }
-}
-
-function getInitial(url: string, title?: string): string {
-  if (title) return title.charAt(0).toUpperCase();
-  const domain = getDomain(url);
-  return domain.charAt(0).toUpperCase() || '?';
-}
-
 export function FaviconImg({ url, size = 16 }: Props) {
-  const [error, setError] = useState(false);
   const domain = getDomain(url);
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=${size * 2}`;
+  const [src, setSrc] = useState<string | null>(() => cache.get(domain) ?? null);
 
-  if (error || !domain) {
+  useEffect(() => {
+    if (!domain) return;
+    if (cache.has(domain)) { setSrc(cache.get(domain) ?? null); return; }
+    fetchFaviconViaBackground(domain).then(setSrc);
+  }, [domain]);
+
+  if (!src) {
     return (
       <span
         style={{
@@ -37,18 +53,18 @@ export function FaviconImg({ url, size = 16 }: Props) {
           flexShrink: 0,
         }}
       >
-        {getInitial(url)}
+        {domain.charAt(0).toUpperCase() || '?'}
       </span>
     );
   }
 
   return (
     <img
-      src={faviconUrl}
+      src={src}
       width={size}
       height={size}
       style={{ borderRadius: 2, flexShrink: 0 }}
-      onError={() => setError(true)}
+      onError={() => { cache.set(domain, null); setSrc(null); }}
       alt=""
     />
   );
