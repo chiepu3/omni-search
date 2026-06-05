@@ -251,6 +251,25 @@ export function SearchModal({ onClose }: Props) {
     onClose();
   }, [onClose]);
 
+  // 現在のクエリからショートカットプレフィックスを除いた純粋なクエリを返す
+  const extractBareQuery = useCallback((q: string): string => {
+    const histPrefix = settings.historyShortcut + ' ';
+    if (q.startsWith(histPrefix)) return q.slice(histPrefix.length);
+    if (q === settings.historyShortcut) return '';
+
+    const dictPrefix = settings.dictShortcut + ' ';
+    if (q.startsWith(dictPrefix)) return q.slice(dictPrefix.length);
+    if (q === settings.dictShortcut) return '';
+
+    for (const site of sites) {
+      const sitePrefix = site.shortcut + ' ';
+      if (q.toLowerCase().startsWith(sitePrefix.toLowerCase())) return q.slice(sitePrefix.length);
+      if (q.toLowerCase() === site.shortcut.toLowerCase()) return '';
+    }
+
+    return q;
+  }, [settings.historyShortcut, settings.dictShortcut, sites]);
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === ',') {
       e.preventDefault();
@@ -266,6 +285,38 @@ export function SearchModal({ onClose }: Props) {
       }
       onClose();
       return;
+    }
+
+    // Alt+[ショートカットキー] で入力済みクエリを保持したままモード切替
+    if (e.altKey && !e.ctrlKey && !e.metaKey && e.key.length === 1 && e.key !== ' ') {
+      const pressed = e.key.toLowerCase();
+      let targetPrefix: string | null = null;
+
+      if (pressed === settings.historyShortcut.toLowerCase()) {
+        targetPrefix = settings.historyShortcut;
+      } else if (pressed === settings.dictShortcut.toLowerCase()) {
+        targetPrefix = settings.dictShortcut;
+      } else {
+        const site = sites.find(s => s.shortcut.length === 1 && s.shortcut.toLowerCase() === pressed);
+        if (site) targetPrefix = site.shortcut;
+      }
+
+      if (targetPrefix !== null) {
+        e.preventDefault();
+        const bare = extractBareQuery(query);
+        const fullPrefix = targetPrefix + ' ';
+        const isAlreadyActive =
+          query.toLowerCase().startsWith(fullPrefix.toLowerCase()) ||
+          query.toLowerCase() === targetPrefix.toLowerCase();
+        const newQuery = isAlreadyActive ? bare : (bare ? fullPrefix + bare : targetPrefix);
+        handleQuery(newQuery);
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.setSelectionRange(newQuery.length, newQuery.length);
+          }
+        }, 0);
+        return;
+      }
     }
 
     if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
@@ -297,7 +348,7 @@ export function SearchModal({ onClose }: Props) {
         open(result, 'current');
       }
     }
-  }, [results, selectedIndex, open, onClose, dictEntry]);
+  }, [results, selectedIndex, open, onClose, dictEntry, settings, sites, query, extractBareQuery, handleQuery]);
 
   return (
     <>
@@ -373,6 +424,7 @@ export function SearchModal({ onClose }: Props) {
             <span><kbd>Ctrl+Enter</kbd> 新しいタブ</span>
             <span><kbd>Shift+Enter</kbd> 新しいウィンドウ</span>
             <span><kbd>↑↓</kbd> 選択</span>
+            <span><kbd>Alt+{settings.historyShortcut.toUpperCase()}</kbd>/<kbd>{settings.dictShortcut.toUpperCase()}</kbd> モード切替</span>
             <span><kbd>Esc</kbd> 閉じる</span>
           </div>
         </div>
