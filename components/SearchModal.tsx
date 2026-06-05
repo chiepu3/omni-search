@@ -419,12 +419,10 @@ export function SearchModal({ onClose }: Props) {
           )}
 
           {/* hint bar */}
-          <div className="px-4 py-1.5 flex gap-4 text-xs" style={{ borderTop: '1px solid var(--os-border)', color: 'var(--os-text-secondary)' }}>
-            <span><kbd>Enter</kbd> 現タブで開く</span>
-            <span><kbd>Ctrl+Enter</kbd> 新しいタブ</span>
-            <span><kbd>Shift+Enter</kbd> 新しいウィンドウ</span>
+          <div className="px-4 py-1.5 flex gap-3 text-xs" style={{ borderTop: '1px solid var(--os-border)', color: 'var(--os-text-secondary)' }}>
             <span><kbd>↑↓</kbd> 選択</span>
-            <span><kbd>Alt+{settings.historyShortcut.toUpperCase()}</kbd>/<kbd>{settings.dictShortcut.toUpperCase()}</kbd> モード切替</span>
+            <span><kbd>Enter</kbd> 開く</span>
+            <span><kbd>Ctrl+Enter</kbd> 新Tab</span>
             <span><kbd>Esc</kbd> 閉じる</span>
           </div>
         </div>
