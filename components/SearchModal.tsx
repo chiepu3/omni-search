@@ -192,7 +192,7 @@ export function SearchModal({ onClose }: Props) {
       try {
         const bmResults = await chrome.runtime.sendMessage({
           action: 'SEARCH_BOOKMARKS',
-          query: siteMatch ? siteMatch.query : q.trim(),
+          query: q.trim(),
         }) as BookmarkEntry[];
         if (myId !== queryIdRef.current) return;
         if (bmResults?.length) {
@@ -205,7 +205,7 @@ export function SearchModal({ onClose }: Props) {
 
     // 辞書検索（サイトマッチ・履歴専用・辞書専用モード以外）
     if (!isHistoryOnly && !isDictOnly && !siteMatch && q.trim()) {
-      const dictQ = siteMatch ? siteMatch.query : q.trim();
+      const dictQ = q.trim();
       if (dictQ) {
         for (const dict of dicts) {
           searchDictionary(dict, dictQ).slice(0, 3).forEach(entry => {
