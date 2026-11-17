@@ -66,3 +66,7 @@ export function IconDownload(props: IconProps) {
 export function IconImport(props: IconProps) {
   return svg('M240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v200h-80v-160H520v-200H240v640h360v80H240Zm638 15L760-183v89h-80v-226h226v80h-90l118 118-56 56Zm-638-95v-640 640Z', props);
 }
+
+export function IconArticle(props: IconProps) {
+  return svg('M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z', props);
+}

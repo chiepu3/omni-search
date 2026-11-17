@@ -1,15 +1,9 @@
 import { useState, useEffect } from 'react';
-import { storage } from '@/lib/storage';
+import { storage, DEFAULT_SETTINGS } from '@/lib/storage';
 import type { Settings } from '@/types';
 
 export function GeneralSection() {
-  const [settings, setSettings] = useState<Settings>({
-    theme: 'system',
-    maxHistoryResults: 20,
-    maxSiteResults: 5,
-    historyShortcut: 'h',
-    dictShortcut: 'd',
-  });
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
     storage.getSettings().then(setSettings);

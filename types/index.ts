@@ -1,3 +1,5 @@
+import type { FulltextHit } from '@/lib/fulltext/protocol';
+
 // Site search configuration
 export interface SiteConfig {
   id: string;
@@ -46,7 +48,7 @@ export interface DictionaryEntry {
 }
 
 // Search mode
-export type SearchMode = 'site' | 'history' | 'dictionary';
+export type SearchMode = 'site' | 'history' | 'dictionary' | 'fulltext';
 
 // Bookmark entry
 export interface BookmarkEntry {
@@ -61,7 +63,8 @@ export type SearchResult =
   | { type: 'history'; entry: HistoryEntry }
   | { type: 'dictionary'; entry: DictionaryEntry; dictionary: Dictionary }
   | { type: 'bookmark'; entry: BookmarkEntry }
-  | { type: 'google'; query: string };
+  | { type: 'google'; query: string }
+  | { type: 'fulltext'; hit: FulltextHit; terms: string[] };
 
 // Settings
 export interface Settings {
@@ -70,6 +73,10 @@ export interface Settings {
   maxSiteResults: number;
   historyShortcut: string; // shortcut prefix for history, e.g. "h"
   dictShortcut: string; // shortcut prefix for dictionary, e.g. "d"
+  fulltextEnabled: boolean; // 閲覧ページの本文を保存する
+  fulltextShortcut: string; // 全文検索専用プレフィックス, e.g. "f"
+  fulltextInDefault: boolean; // プレフィックスなしの検索にも全文検索結果を混ぜる
+  maxFulltextResults: number; // 全文検索モードでの最大件数
 }
 
 // Messages

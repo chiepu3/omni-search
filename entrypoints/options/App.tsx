@@ -4,15 +4,17 @@ import { SitesSection } from './sections/SitesSection';
 import { DictionarySection } from './sections/DictionarySection';
 import { GeneralSection } from './sections/GeneralSection';
 import { BookmarkShortcutsSection } from './sections/BookmarkShortcutsSection';
-import { IconSettings, IconSearch, IconBook, IconUpload, IconDownload } from '@/components/icons';
+import { FulltextSection } from './sections/FulltextSection';
+import { IconSettings, IconSearch, IconBook, IconUpload, IconDownload, IconArticle } from '@/components/icons';
 
-type Tab = 'general' | 'sites' | 'dictionary' | 'bookmarks';
+type Tab = 'general' | 'sites' | 'dictionary' | 'bookmarks' | 'fulltext';
 
 const TAB_LABELS: Record<Tab, { label: string; icon: React.ReactNode }> = {
   general: { label: '一般設定', icon: <IconSettings size={18} /> },
   sites: { label: 'サイト検索', icon: <IconSearch size={18} /> },
   dictionary: { label: '辞書', icon: <IconBook size={18} /> },
   bookmarks: { label: 'ブックマーク', icon: <IconBook size={18} /> },
+  fulltext: { label: '全文検索', icon: <IconArticle size={18} /> },
 };
 
 export function App() {
@@ -93,6 +95,7 @@ export function App() {
           {activeTab === 'sites' && <SitesSection />}
           {activeTab === 'dictionary' && <DictionarySection />}
           {activeTab === 'bookmarks' && <BookmarkShortcutsSection />}
+          {activeTab === 'fulltext' && <FulltextSection />}
         </main>
       </div>
     </div>
