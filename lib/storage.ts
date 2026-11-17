@@ -1,12 +1,16 @@
 import JSZip from 'jszip';
 import type { SiteConfig, Dictionary, Settings } from '@/types';
 
-const DEFAULT_SETTINGS: Settings = {
+export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   maxHistoryResults: 20,
   maxSiteResults: 5,
   historyShortcut: 'h',
   dictShortcut: 'd',
+  fulltextEnabled: true,
+  fulltextShortcut: 'f',
+  fulltextInDefault: true,
+  maxFulltextResults: 20,
 };
 
 const KEYS = {

@@ -13,6 +13,8 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "@sqlite.org/sqlite-wasm": "^3.54.1-build1",
     "fuse.js": "^7.1.0",
     "jszip": "^3.10.1",
     "react": "^19.0.0",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",
+    "@types/chrome": "^0.3.7",
     "@types/jszip": "^3.4.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
