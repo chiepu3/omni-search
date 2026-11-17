@@ -17,15 +17,20 @@ try {
   Write-Host "OmniSearch を更新します（現在 $($current.version)）"
   Write-Host "取得元: $Url"
 
-  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-  # 会社のプロキシ（Windows の設定）を認証つきで使う
-  [Net.WebRequest]::DefaultWebProxy.Credentials = [Net.CredentialCache]::DefaultNetworkCredentials
 
   $work = Join-Path $env:TEMP ('omni-search-update-' + [guid]::NewGuid().ToString('N'))
   New-Item -ItemType Directory -Path $work | Out-Null
   try {
     $zip = Join-Path $work 'omni-search-chrome.zip'
-    Invoke-WebRequest -Uri $Url -OutFile $zip -UseBasicParsing
+    # PowerShell 5.1 の Invoke-WebRequest は GitHub の署名付きダウンロード URL を書き換えて 404 になるため使わない。
+    # BITS（Windows のプロキシ設定を使う）で取り、使えなければ Windows 同梱の curl.exe で取る。
+    try {
+      Start-BitsTransfer -Source $Url -Destination $zip -ErrorAction Stop
+    } catch {
+      Write-Host "BITS で取得できなかったため curl で再試行します（$($_.Exception.Message)）"
+      & curl.exe -fsSL -o $zip $Url
+      if ($LASTEXITCODE -ne 0) { throw "ダウンロードに失敗しました（curl $LASTEXITCODE）" }
+    }
     $src = Join-Path $work 'x'
     Expand-Archive -Path $zip -DestinationPath $src
     $next = Get-Content -Raw -Encoding UTF8 (Join-Path $src 'manifest.json') | ConvertFrom-Json
