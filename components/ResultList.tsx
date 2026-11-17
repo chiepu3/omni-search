@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { SearchResult, SiteConfig } from '@/types';
 import { buildUrl } from '@/lib/sites';
 import { FaviconImg } from './FaviconImg';
+import { displayDomain, formatRelativeTime } from './relativeTime';
 
 interface Props {
   results: SearchResult[];
@@ -21,7 +22,7 @@ export function ResultList({ results, selectedIndex, onSelect, onHover }: Props)
   if (results.length === 0) return null;
 
   return (
-    <div ref={listRef} className="mt-1 max-h-80 overflow-y-auto">
+    <div ref={listRef} className="mt-1 max-h-[min(28rem,60vh)] overflow-y-auto">
       {results.map((result, i) => (
         <ResultItem
           key={resultKey(result, i)}
@@ -35,11 +36,12 @@ export function ResultList({ results, selectedIndex, onSelect, onHover }: Props)
   );
 }
 
-function resultKey(result: SearchResult, i: number): string {
+export function resultKey(result: SearchResult, i: number): string {
   if (result.type === 'site') return `site-${result.site.id}-${i}`;
   if (result.type === 'history') return `hist-${result.entry.id}`;
   if (result.type === 'bookmark') return `bm-${result.entry.id}`;
   if (result.type === 'google') return `google-${i}`;
+  if (result.type === 'fulltext') return `ft-${result.hit.id}`;
   return `dict-${result.entry.id}`;
 }
 
@@ -137,7 +139,60 @@ function ResultItem({ result, selected, onSelect, onHover }: ItemProps) {
     );
   }
 
+  if (result.type === 'fulltext') {
+    const { hit } = result;
+    const snippet = hit.snippet;
+    return (
+      <div className="px-3 py-2 cursor-pointer flex items-start gap-2 rounded text-sm" style={itemStyle} onClick={onSelect} onMouseEnter={onHover}>
+        <span className="mt-0.5 flex-shrink-0 flex"><FaviconImg url={hit.url} size={16} /></span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="truncate font-medium">{hit.title || hit.url}</span>
+            {hit.fuzzy && (
+              <span
+                className="flex-shrink-0 rounded px-1.5 text-[10px] leading-4"
+                style={{
+                  border: `1px solid ${selected ? 'rgba(255,255,255,0.35)' : 'var(--os-border)'}`,
+                  color: subStyle.color,
+                }}
+              >
+                あいまい
+              </span>
+            )}
+          </div>
+          {snippet && (
+            <div
+              className="text-xs leading-relaxed mt-0.5 line-clamp-2 break-all"
+              style={{ color: selected ? 'rgba(255,255,255,0.85)' : 'var(--os-text, #f0f0f5)', opacity: selected ? 1 : 0.78 }}
+            >
+              {oneLine(snippet.before)}
+              <mark
+                style={{
+                  backgroundColor: selected ? 'rgba(255,255,255,0.22)' : 'var(--os-mark-bg, rgba(245,158,11,0.3))',
+                  color: 'inherit',
+                  borderRadius: 2,
+                  padding: '0 1px',
+                }}
+              >
+                {oneLine(snippet.match)}
+              </mark>
+              {oneLine(snippet.after)}
+            </div>
+          )}
+          <div className="truncate text-[11px] mt-0.5" style={subStyle}>
+            {displayDomain(hit.url)} · {formatRelativeTime(hit.lastVisit)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return null;
+}
+
+// スニペット内の改行・連続空白を1つの空白にまとめる
+function oneLine(s: string): string {
+  return s.replace(/\s+/g, ' ');
 }
 
 function SiteIcon({ site }: { site: SiteConfig }) {

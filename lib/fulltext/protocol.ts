@@ -45,9 +45,9 @@ export interface ExcludeRule {
 export type FtRequest =
   | { action: 'FT_PAGE_STATUS' } // sender.tab.url を使う
   | { action: 'FT_CAPTURE'; page: CapturedPage }
-  | { action: 'FT_SEARCH'; query: string; limit: number }
+  | { action: 'FT_SEARCH'; query: string; limit: number; fuzzy?: boolean } // fuzzy=false で曖昧フォールバックを行わない（既定 true）
   | { action: 'FT_GET_PAGE'; id: number } // プレビュー用
-  | { action: 'FT_OPEN'; url: string; terms: string[]; target: 'current' | 'tab' | 'window' }
+  | { action: 'FT_OPEN'; url: string; terms: string[]; target: 'current' | 'tab' | 'window'; fuzzy?: boolean }
   | { action: 'FT_TAKE_FOCUS' } // 遷移先ページが読み込み後に問い合わせる
   | { action: 'FT_STATS' }
   | { action: 'FT_LIST_RULES' }
@@ -63,7 +63,7 @@ export type FtResponse<A extends FtRequest['action']> =
   A extends 'FT_SEARCH' ? { hits: FulltextHit[]; tookMs: number; terms: string[] } :
   A extends 'FT_GET_PAGE' ? { url: string; title: string; body: string; lastVisit: number } | null :
   A extends 'FT_OPEN' ? { ok: boolean } :
-  A extends 'FT_TAKE_FOCUS' ? { terms: string[] } | null :
+  A extends 'FT_TAKE_FOCUS' ? { terms: string[]; fuzzy?: boolean } | null :
   A extends 'FT_STATS' ? FulltextStats :
   A extends 'FT_LIST_RULES' ? ExcludeRule[] :
   A extends 'FT_ADD_RULE' | 'FT_REMOVE_RULE' ? { ok: boolean; error?: string } :
@@ -75,4 +75,4 @@ export type FtResponse<A extends FtRequest['action']> =
 // background → content script
 export type FtPush =
   | { action: 'FT_RECAPTURE' } // SPA の URL 変化
-  | { action: 'FT_FOCUS'; terms: string[] }; // 同一URLのタブに直接フォーカス指示
+  | { action: 'FT_FOCUS'; terms: string[]; fuzzy?: boolean }; // 同一URLのタブに直接フォーカス指示

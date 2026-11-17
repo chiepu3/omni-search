@@ -5,8 +5,11 @@ export default defineConfig({
   manifest: {
     name: 'OmniSearch',
     description: 'PowerToys Run-like quick launcher with site search, history, and dictionary',
-    version: '1.0.0',
-    permissions: ['storage', 'history', 'tabs', 'bookmarks'],
+    version: '1.1.0',
+    permissions: ['storage', 'history', 'tabs', 'bookmarks', 'offscreen', 'unlimitedStorage', 'favicon'],
+    content_security_policy: {
+      extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+    },
     host_permissions: ['<all_urls>'],
     commands: {
       'toggle-search': {
@@ -19,6 +22,8 @@ export default defineConfig({
     },
   },
   vite: () => ({
+    worker: { format: 'es' },
+    optimizeDeps: { exclude: ['@sqlite.org/sqlite-wasm'] },
     build: {
       target: 'esnext',
     },

@@ -4,6 +4,15 @@ A PowerToys Run-like quick launcher Chrome extension with:
 - **Site search**: Define shortcut keywords to search any site (e.g. `s query` → search)
 - **History search**: Fuzzy search through browser history
 - **Dictionary search**: Import CSV dictionaries, search inline, view details in modal
+- **全文ページ検索**: 閲覧したページの本文をローカル（拡張機能内の SQLite/OPFS）に保存し、`f キーワード` で本文から検索。Enter で元ページへ飛び、一致箇所までスクロールして選択・ハイライトする
+
+## 全文ページ検索
+
+- 日本語向けに正規化してから bigram で索引する（全角半角・カタカナ/ひらがな・長音の有無・一部の異体字・ページ内の余計な空白や改行を無視）。一致が少ないときは打ち間違いを許す「あいまい」一致も出す
+- 検索語は空白区切りで AND、`-語` で除外
+- `Alt+Enter` で保存済みテキストのプレビュー（ページが消えた時用）
+- 設定画面「全文検索」で、保存のオン/オフ、プレフィックス、除外ルール、Full Text Tabs Forever のエクスポート JSON の取り込み、削除ができる
+- データは外部へ送信しない。設計は `docs/fulltext/DESIGN.md`
 
 ## Usage
 

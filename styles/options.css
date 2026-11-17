@@ -74,3 +74,13 @@ body {
     border-color: var(--border);
   }
 }
+
+/* 全文検索: 取り込み件数が未確定のときの進捗バー */
+@keyframes os-progress-indeterminate {
+  0% { left: -30%; }
+  100% { left: 100%; }
+}
+
+.os-progress-indeterminate {
+  animation: os-progress-indeterminate 1.2s ease-in-out infinite;
+}
