@@ -30,6 +30,10 @@ jobs:
       - name: Create zip
         run: npm run zip
 
+      # update.bat が releases/latest/download/omni-search-chrome.zip で取得できるよう固定名でも置く
+      - name: Copy zip to fixed name
+        run: cp .output/omni-search-*-chrome.zip .output/omni-search-chrome.zip
+
       - name: Get version
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
