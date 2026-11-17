@@ -42,6 +42,25 @@ export function GeneralSection() {
         </div>
       </Section>
 
+      <Section title="バージョンと更新">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.7 }}>
+            現在のバージョン：<span style={{ color: 'var(--text)', fontWeight: 600 }}>{chrome.runtime.getManifest().version}</span>
+            <br />
+            更新するには、拡張機能のフォルダにある <kbd style={kbdStyle}>update.bat</kbd> を実行してから再読み込みしてください。
+          </p>
+          <button
+            onClick={() => chrome.runtime.reload()}
+            style={{
+              flexShrink: 0, padding: '6px 16px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer',
+              border: 'none', backgroundColor: 'var(--accent)', color: '#fff',
+            }}
+          >
+            拡張機能を再読み込み
+          </button>
+        </div>
+      </Section>
+
       <Section title="キーボードショートカット">
         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
           デフォルト：<kbd style={{ backgroundColor: 'var(--surface)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>Alt+Shift+K</kbd>
@@ -112,6 +131,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     </div>
   );
 }
+
+const kbdStyle: React.CSSProperties = {
+  backgroundColor: 'var(--surface-hover)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px',
+};
 
 const inputStyle: React.CSSProperties = {
   backgroundColor: 'var(--surface-hover)',
